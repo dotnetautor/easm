@@ -1,0 +1,29 @@
+{
+  "name": "easm",
+  "version": "0.1.0",
+  "private": true,
+  "author": {
+    "name": "Matthias Fischer",
+    "email": "opensource@dotnetautor.de",
+    "url": "https://mfico.de"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dotnetautor/easm.git"
+  },
+  "engines": {
+    "node": ">= 8.0.0",
+    "npm": ">= 5.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "config/*"
+  ],
+  "dependencies": {
+
+  },
+  "devDependencies": {
+    "lerna": "3.13.1"
+  }
+}

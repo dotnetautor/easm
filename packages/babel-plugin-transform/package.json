@@ -1,0 +1,29 @@
+{
+  "name": "@easm/babel-plugin-transform",
+  "version": "0.2.1-beta.3",
+  "author": {
+    "name": "Matthias Fischer",
+    "email": "opensource@dotnetautor.de",
+    "url": "https://mfico.de"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dotnetautor/easm.git"
+  },
+  "scripts": {
+    "cleanup": "shx rm -rf dist",
+    "prebuild": "npm run cleanup",
+    "build": "babel ./src/index.js --out-dir ./dist/lib  --source-maps --no-comments --presets=@babel/env",
+    "postbuild": "node ../../scripts/copy",
+    "publish": "npm publish ./dist --tag beta --access public --dry-run",
+    "pack": "npm pack ./dist",
+    "postpack": "mkdir -p ../../dist && mv *.tgz ../../dist"
+  },
+  "main": "./dist/lib/index.js",
+  "devDependencies": {
+    "@babel/cli": "7.2.3",
+    "@babel/core": "7.3.4",
+    "@babel/preset-env": "^7.3.4"
+  }
+}
