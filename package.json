@@ -12,6 +12,9 @@
     "type": "git",
     "url": "https://github.com/dotnetautor/easm.git"
   },
+  "scripts": {
+    "postinstall": "lerna bootstrap"
+  },
   "engines": {
     "node": ">= 8.0.0",
     "npm": ">= 5.0.0"
