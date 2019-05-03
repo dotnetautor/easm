@@ -120,7 +120,7 @@ const asyncTitleAction = async (time: number = get(applicationStore.state.applic
 asyncTitleAction(2000);
 ```
 ## Using EASM with React Hooks >= 16.8
-The react library of EASM provides a custom hook gennerator function `createHook`.
+The react library of EASM provides a custom hook generator function `createHook`.
 ```ts
 import { createHook } from '@easm/react';
 // ...
@@ -252,7 +252,7 @@ Finally, the component needs to be connected with the store:
 ```ts
 const Title = connectApplication(mapTitleCompnentProps)(TitleComponent);
 ```
-The Title componment con be used like this:
+The Title componment can be used like this:
 ```ts
 const App: React.SFC = (props) => (
   <>
