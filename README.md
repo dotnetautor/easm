@@ -2,6 +2,7 @@
 
 [![Donate](https://img.shields.io/badge/donate-paypal-blue.svg)](https://paypal.me/dotnetautor)
 [![License MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](https://github.com/dotnetautor/easm/blob/master/LICENSE.md)
+[![Build](https://travis-ci.org/dotnetautor/easm.svg?branch=master)](https://travis-ci.org/dotnetautor/easm)
 
 ## Introduction
 The goal of the `essential application state manager` **(easm)** is to provide an easy way to manage the state of an application with ease. It can be used for small and large scale application as well. Basically it is inspired by the FLUX pattern and the idea of a unidirectional data flow.
