@@ -5,9 +5,9 @@ export default function ({ types: t }) {
     let operationValue = path.node.arguments[1];
     let vPath = [toVirtualPathSegment(vPathNode)];
 
-    while (vPathNode.property.name !== "state" || contains(vPathNode.object, "state")) {
+    while (!vPathNode.property || vPathNode.property.name !== "state" || contains(vPathNode.object, "state")) {
       if (!t.isMemberExpression(vPathNode)) {
-        throw new Error("vPath must contain keyword state.");
+        throw new Error("vPath must contain a store and the keyword state.");
       }
       vPathNode = vPathNode.object;
       vPath.unshift(toVirtualPathSegment(vPathNode));
