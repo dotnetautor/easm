@@ -31,9 +31,6 @@ export function createAdapter<TStoreState>(store: Store<TStoreState>) {
     const injectApplicationStore = (WrappedComponent: React.ComponentType<TProps & TStateProps>): React.ComponentType<TProps> => {
 
       class StoreAdapter extends React.Component<TProps, {}> {
-        public static propTypes = {
-          innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-        } as any;
 
         render(): JSX.Element {
           return React.createElement(WrappedComponent, { ...(this.props as any), ...(mapProps(store) as any) });
