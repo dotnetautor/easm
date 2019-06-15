@@ -14,7 +14,7 @@ type ComponentDecoratorInfer<TMergedProps> = {
 };
 
 export type Connect<TStateProps> = FunctionResult<TStateProps> & {
-  innerRef?: React.Ref<any> | React.RefObject<any>;
+
 };
 
 export function createAdapter<TStoreState extends (Store<TStoreState> | {})>(store: TStoreState): {

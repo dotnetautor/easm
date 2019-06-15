@@ -12,7 +12,7 @@
     "url": "https://github.com/dotnetautor/easm.git"
   },
   "scripts": {
-    "cleanup": "shx rm -rf dist",
+    "cleanup": "shx rm -rf ./dist/*",
     "prebuild": "npm run cleanup",
     "build": "webpack --mode production --progress",
     "start": "webpack-dev-server --progress --inline --progress --env debug --content-base dist/ --host 0.0.0.0 --port 3100",
@@ -25,7 +25,8 @@
   "dependencies": {
     "@easm/core": "^0.2.1-beta",
     "@easm/react": "^0.2.1-beta",
-    "@easm/babel-plugin-transform": "^0.2.1-beta",
+    "@easm/babel-plugin-transform": "^0.2.14beta",
+    "@easm/ts-plugin-transform": "^0.2.14beta",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },

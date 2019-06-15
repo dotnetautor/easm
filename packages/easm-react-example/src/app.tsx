@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
 import { get, set } from '@easm/core';
+import { get as xGet } from '@easm/core';
 import * as proxy from '@easm/core';
 
 import { useStore, useUserStore } from './store/applicationStore';
@@ -20,8 +21,8 @@ const asyncTitleAction = async (time: number = 500) => {
   const title = await getTitleAsync(time);
   set(store.state.title, title);
   set(store.state.isBusy, false);
-  set(store.state.users[get(store.state.currentUser)].name, "Max");
-  proxy.set(store.state.users[get(store.state.currentUser)], { ...get(store.state.users[get(store.state.currentUser)]) });
+  set(store.state.users[xGet(store.state.currentUser)].name, "Max");
+  proxy.set(store.state.users[xGet(store.state.currentUser)], { ...xGet(store.state.users[xGet(store.state.currentUser)]) });
 };
 
 
@@ -31,8 +32,8 @@ type TitleProps = {
 
 const Title: React.SFC<TitleProps> = (props) => {
   const { title, state } = useStore((store) => ({
-    title: get(store.state.title),
-    state: get(store.state),
+    title: xGet(store.state.title),
+    state: xGet(store.state),
   }));
 
   return (
@@ -56,7 +57,7 @@ type UserProps = {
 const User: React.FC<UserProps> = (props) => {
  const { name } = useUserStore((userStore) => {
     return {
-      name: get(userStore.state[0].name),
+      name: xGet(userStore.state[0].name),
     }
   });
   return (

@@ -3,6 +3,8 @@ const webpack = require('webpack');
 const autoprefixer = require('autoprefixer');
 const TerserPlugin = require('terser-webpack-plugin');
 
+const easmTransformer = require('@easm/ts-plugin-transform');
+
 module.exports = (env) => {
   const debug = env === 'debug';
   return {
@@ -32,6 +34,13 @@ module.exports = (env) => {
         },
         {
           loader: 'ts-loader',
+          options: {
+            getCustomTransformers: program => ({
+              before: [
+                easmTransformer(program)
+              ]
+            })
+          }
         }
         ]
       }, {

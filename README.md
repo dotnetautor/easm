@@ -28,10 +28,48 @@ npm install -D -E @easm/babel-plugin-transform
 ```
 yarn add -E @easm/core
 yarn add -E @easm/react
+yarn add -D -E @easm/ts-plugin-transform
 yarn add -D -E @easm/babel-plugin-transform
+
 ```
 
 ## Usage
+### Choose your transpiler
+`easm` can be used either directly with a typescript transpiler plugin or alternatively it can be used with a babel plugin.
+
+### Configure typescript & webpack
+To use `easm` directly with typescript and webpack the package `@easm/ts-plugin-transform` will be need. Then the plugin can be imported into the `webpack.config.js` file and the ts-loader can be configured as follows:
+
+```js
+const easmTransformer = require('@easm/ts-plugin-transform');
+// ...
+module.exports = {
+   name: 'Client',
+    target: 'web',
+    // ..
+    module: {
+      rules: [{
+        exclude: /(node_modules|bower_components)/,
+        test: /\.tsx?$/,
+        use: [ {
+          loader: 'ts-loader',
+          options: {
+            getCustomTransformers: program => ({
+              before: [
+                easmTransformer(program)
+              ]
+            })
+          }
+        }]
+      },
+      // ..
+      ]
+    },
+    // ...
+  };
+};
+```
+
 ### Configure babel
 The essential application state manager needs its own babel transpiler provided in the package `@easm/babel-plugin-transform`. Please add this plugin to your `.babelrc` configuration file as plugin before using EASM. eg.:
 

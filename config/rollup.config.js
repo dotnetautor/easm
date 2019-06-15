@@ -1,6 +1,7 @@
 import { resolve } from 'path'
 import sourceMaps from 'rollup-plugin-sourcemaps'
 import nodeResolve from 'rollup-plugin-node-resolve'
+import builtins from 'rollup-plugin-node-builtins';
 import json from 'rollup-plugin-json'
 import commonjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
@@ -62,11 +63,11 @@ function getOutputFileName(fileName, isProd = false) {
  * @typedef {import('./types').RollupPlugin} Plugin
  */
 
-const env = process.env.NODE_ENV || 'development'
-const { ifProduction } = getIfUtils(env)
+const env = process.env.NODE_ENV || 'development';
+const { ifProduction } = getIfUtils(env);
 
-const LIB_NAME = pascalCase(normalizePackageName(pkg.name))
-const DIST = resolve(ROOT, 'dist')
+const LIB_NAME = pascalCase(normalizePackageName(pkg.name));
+const DIST = resolve(ROOT, 'dist');
 
 /**
  * Object literals are open-ended for js checking, so we need to be explicit
@@ -83,12 +84,15 @@ const PATHS = {
 /**
  * @type {string[]}
  */
-const external = pkg.peerDependencies && Object.keys(pkg.peerDependencies) || []
+const external = pkg.peerDependencies && Object.keys(pkg.peerDependencies) || [];
 
 /**
  *  @type {Plugin[]}
  */
 const plugins = /** @type {Plugin[]} */ ([
+  // Allows the node builtins to be required/imported.
+  builtins(),
+
   // Allow json resolution
   json(),
 
