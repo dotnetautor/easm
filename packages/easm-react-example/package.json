@@ -25,8 +25,8 @@
   "dependencies": {
     "@easm/core": "^0.2.1-beta",
     "@easm/react": "^0.2.1-beta",
-    "@easm/babel-plugin-transform": "^0.2.14beta",
-    "@easm/ts-plugin-transform": "^0.2.14beta",
+    "@easm/babel-plugin-transform": "^0.2.1-beta.4",
+    "@easm/ts-plugin-transform": "^0.2.1-beta.5",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
