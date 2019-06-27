@@ -1,4 +1,12 @@
-export const get = <TData>(vpath: TData): TData => {
+export type Immutable<T> = {
+  readonly [P in keyof T]: Immutable<T[P]>;
+};
+
+export type Mutable<T> = {
+  -readonly [P in keyof T]: Mutable<T[P]>;
+};
+
+export const get = <TData>(vpath: TData): Immutable<TData> => {
   throw new Error("Do not call get directly");
 };
 

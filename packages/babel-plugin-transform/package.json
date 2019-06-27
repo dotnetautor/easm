@@ -1,6 +1,6 @@
 {
   "name": "@easm/babel-plugin-transform",
-  "version": "0.2.1-beta.4",
+  "version": "0.2.2-beta.1",
   "author": {
     "name": "Matthias Fischer",
     "email": "opensource@dotnetautor.de",

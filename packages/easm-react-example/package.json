@@ -23,10 +23,10 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@easm/core": "^0.2.1-beta",
-    "@easm/react": "^0.2.1-beta",
-    "@easm/babel-plugin-transform": "^0.2.1-beta.4",
-    "@easm/ts-plugin-transform": "^0.2.1-beta.5",
+    "@easm/core": "^0.2.2-beta",
+    "@easm/react": "^0.2.2-beta",
+    "@easm/babel-plugin-transform": "^0.2.2-beta",
+    "@easm/ts-plugin-transform": "^0.2.2-beta",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },

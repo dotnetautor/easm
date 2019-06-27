@@ -36,12 +36,16 @@ const Title: React.SFC<TitleProps> = (props) => {
     state: xGet(store.state),
   }));
 
+  // state.currentUser = "";
+
   return (
   <>
     <div onClick={() => asyncTitleAction(2000).catch(err => console.error(err))} >{title}</div>
     <pre>{JSON.stringify(state, null, 2)}</pre>
   </>
 )};
+
+
 
 const asyncUserAction = async (time: number = 500) => {
   const store = useUserStore() ;

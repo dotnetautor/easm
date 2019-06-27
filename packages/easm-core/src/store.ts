@@ -84,7 +84,16 @@ export class Store<TStoreState>  {
 
     const updatePath = (state: any, key: string): any => {
       if (pos >= vPath.length) {
-        return updateFunction(state, key);
+
+        const newValue = updateFunction(state, key);
+
+        return (
+          state[key] !== newValue
+            ? Object.assign(Array.isArray(state) ? [...state] : { ...state }, { [key]: newValue })
+            : state
+        );
+
+
       } else {
         const newKey = vPath[pos++];
         const oldState = state[key];
@@ -97,11 +106,14 @@ export class Store<TStoreState>  {
 
     this._state = updatePath(oldState, vPath[pos++]);
 
-    if (this._state !== oldState && !this.timeOutStateChanged) {
-      this.timeOutStateChanged = window.setTimeout(() => {
-        this.timeOutStateChanged = null;
-        this.onStateChanged();
-      });
+    // handle state change
+    if (this._state !== oldState) {
+      if (!this.timeOutStateChanged) {
+        this.timeOutStateChanged = window.setTimeout(() => {
+          this.timeOutStateChanged = null;
+          this.onStateChanged();
+        });
+      }
     }
   }
 
@@ -113,14 +125,8 @@ export class Store<TStoreState>  {
     return result;
   }
 
-  private set(vPath: string[], value: any) {
-    vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
-      return (
-        parent[key] !== value
-        ? Object.assign(Array.isArray(parent) ? [...parent] : { ...parent }, { [key]: value })
-          : parent
-      );
-    });
+  private set(vPath: string[], value: any): any {
+    vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => value);
     return value;
   }
 
@@ -128,7 +134,7 @@ export class Store<TStoreState>  {
     let result: any;
     vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
       result = { ...(parent[key] || {}), ...value };
-      return Object.assign(Array.isArray(parent) ? [...parent] : { ...parent }, { [key]: result });
+      return result;
     });
     return result;
   }
@@ -138,8 +144,8 @@ export class Store<TStoreState>  {
     vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
-        result = orig.pop();
-        return Object.assign(Array.isArray(parent) ? [...parent] : { ...parent }, { [key]: [...orig] })
+        result = [...orig].pop();
+        return result;
       }
       return parent;
     });
@@ -151,8 +157,8 @@ export class Store<TStoreState>  {
     vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
-        result = orig.unshift(value);
-        return Object.assign(Array.isArray(parent) ? [...parent] : { ...parent }, { [key]: [...orig] })
+        result = [...orig].unshift(value);
+        return result;
       }
       return parent;
     });
@@ -164,8 +170,8 @@ export class Store<TStoreState>  {
     vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
-        result = orig.shift();
-        return Object.assign(Array.isArray(parent) ? [...parent] : { ...parent }, { [key]: [...orig] })
+        result = [...orig.shift()];
+        return result;
       }
       return parent;
     });
@@ -177,8 +183,8 @@ export class Store<TStoreState>  {
     vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
-        result = orig.push(value);
-        return Object.assign(Array.isArray(parent) ? [...parent] : { ...parent }, { [key]: [...orig] })
+        result = [...orig].push(value);
+        return result;
       }
       return parent;
     });
