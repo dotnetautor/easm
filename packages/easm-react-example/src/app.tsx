@@ -36,7 +36,7 @@ const Title: React.SFC<TitleProps> = (props) => {
     state: xGet(store.state),
   }));
 
-  // state.currentUser = "";
+  // state.users[0] = { name: ""};
 
   return (
   <>
@@ -45,14 +45,17 @@ const Title: React.SFC<TitleProps> = (props) => {
   </>
 )};
 
-
-
 const asyncUserAction = async (time: number = 500) => {
   const store = useUserStore() ;
   const title = await getTitleAsync(time);
   set(store.state[1].name, title);
 };
 
+const asyncDemoAction = async () => {
+  const store = useStore();
+  const user = get(store.state.users[0]);
+  set(store.state.users[0], user);
+};
 
 type UserProps = {
   title: string;

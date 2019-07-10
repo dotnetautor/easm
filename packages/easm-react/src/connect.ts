@@ -2,17 +2,12 @@ import * as React from 'react';
 
 import { Store } from '@easm/core';
 
-type FuncInfer<T> = {
-  ([...args]: any): T;
-};
-
-type FunctionResult<T> = T extends FuncInfer<infer U> ? U : never;
 
 type ComponentDecoratorInfer<TMergedProps> = {
-  <TProps>(wrappedComponent: React.ComponentType<TProps & TMergedProps>): React.ComponentClass<TProps>;
+  <TProps>(wrappedComponent: React.ComponentType<TProps & TMergedProps>): React.ComponentClass<Omit<TProps & TMergedProps, keyof TMergedProps>>;
 };
 
-export type Connect<TStateProps> = FunctionResult<TStateProps> & {
+export type Connect<TStateProps extends (...args: any) => any> = ReturnType<TStateProps> & {
 
 };
 
@@ -22,7 +17,7 @@ export function createAdapter<TStoreState extends (Store<TStoreState> | {})>(sto
   store: Store<TStoreState extends Store<infer StoreState> ? StoreState : TStoreState>
 }
 
-export function createAdapter<TStoreState>(store: Store<TStoreState>) {
+export function createAdapter<TStoreState>(store: Store<TStoreState>): any {
 
   const connectStore = <TProps, TStateProps>(mapProps: (store: Store<TStoreState>) => TStateProps):
     ((WrappedComponent: React.ComponentType<TProps & TStateProps>) => React.ComponentType<TProps>) => {

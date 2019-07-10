@@ -30,6 +30,6 @@ export const shift = <TData>(vpath: TData[]): TData => {
   throw new Error("Do not call shift directly");
 };
 
-export const merge = <TData extends { }>(vpath: TData, value: TData): TData => {
+export const merge = <TData extends { }>(vpath: TData, value: Partial<TData>): TData => {
   throw new Error("Do not call merge directly");
 };
