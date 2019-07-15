@@ -1,6 +1,6 @@
 {
   "name": "@easm/core",
-  "version": "0.2.2-beta.2",
+  "version": "0.2.3",
   "author": {
     "name": "Matthias Fischer",
     "email": "opensource@dotnetautor.de",
@@ -18,7 +18,8 @@
     "postbuild": "node ../../scripts/copy",
     "pack": "npm pack ./dist",
     "postpack": "mkdir -p ../../dist && mv *.tgz ../../dist",
-    "docs": "typedoc -p . --theme minimal --target 'es6' --excludeNotExported --excludePrivate --ignoreCompilerErrors --exclude \"**/src/**/__tests__/*.*\" --out docs src/"
+    "docs": "typedoc -p . --theme minimal --target 'es6' --excludeNotExported --excludePrivate --ignoreCompilerErrors --exclude \"**/src/**/__tests__/*.*\" --out docs src/",
+    "publish": "npm publish ./dist -tag latest"
   },
   "main": "./dist/bundles/index.umd.js",
   "module": "./dist/esm5/index.js",

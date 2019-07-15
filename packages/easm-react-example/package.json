@@ -1,6 +1,6 @@
 {
   "name": "@easm/react-demo",
-  "version": "0.2.1-beta.3",
+  "version": "0.2.3",
   "author": {
     "name": "Matthias Fischer",
     "email": "opensource@dotnetautor.de",
@@ -23,10 +23,10 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@easm/core": "^0.2.2-beta",
-    "@easm/react": "^0.2.2-beta",
-    "@easm/babel-plugin-transform": "^0.2.2-beta",
-    "@easm/ts-plugin-transform": "^0.2.2-beta",
+    "@easm/core": "^0.2.3",
+    "@easm/react": "^0.2.3",
+    "@easm/babel-plugin-transform": "^0.2.3",
+    "@easm/ts-plugin-transform": "^0.2.3",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },

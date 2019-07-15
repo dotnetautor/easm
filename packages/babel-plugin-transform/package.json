@@ -1,6 +1,6 @@
 {
   "name": "@easm/babel-plugin-transform",
-  "version": "0.2.2-beta.1",
+  "version": "0.2.3",
   "author": {
     "name": "Matthias Fischer",
     "email": "opensource@dotnetautor.de",
@@ -16,7 +16,7 @@
     "prebuild": "npm run cleanup",
     "build": "babel ./src/index.js --out-dir ./dist/lib  --source-maps --no-comments --presets=@babel/env",
     "postbuild": "node ../../scripts/copy",
-    "publish": "npm publish ./dist --tag beta --access public --dry-run",
+    "publish": "npm publish ./dist -tag latest",
     "pack": "npm pack ./dist",
     "postpack": "mkdir -p ../../dist && mv *.tgz ../../dist"
   },

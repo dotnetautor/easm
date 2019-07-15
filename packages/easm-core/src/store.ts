@@ -82,25 +82,26 @@ export class Store<TStoreState>  {
     let oldState: {} = this._state;
     let pos = 1;
 
+    const createNewStateObject = (state: any, key: string, newValue: any) => {
+      if (state && state[key] === newValue) {
+        return state[key];
+      }
+
+      return Array.isArray(state)
+        ? Object.assign([], state, { [key]: newValue })
+        : Object.assign(Object.create(state && state.__proto__ || null), state, { [key]: newValue });
+    }
+
     const updatePath = (state: any, key: string): any => {
       if (pos >= vPath.length) {
 
         const newValue = updateFunction(state, key);
-
-        return (
-          state[key] !== newValue
-            ? Object.assign(Array.isArray(state) ? [...state] : { ...state }, { [key]: newValue })
-            : state
-        );
-
+        return createNewStateObject(state, key, newValue);
 
       } else {
         const newKey = vPath[pos++];
         const oldState = state[key];
-        const newState = updatePath(oldState, newKey);
-        return oldState !== newState
-          ? Object.assign(Array.isArray(state) ? [...state] : { ...state }, { [key]: newState })
-          : state
+        return createNewStateObject(state, key, updatePath(oldState, newKey))
       }
     }
 
