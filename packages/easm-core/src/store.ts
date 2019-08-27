@@ -84,12 +84,15 @@ export class Store<TStoreState>  {
 
     const createNewStateObject = (state: any, key: string, newValue: any) => {
       if (state && state[key] === newValue) {
-        return state[key];
+        return state;
       }
 
-      return Array.isArray(state)
-        ? Object.assign([], state, { [key]: newValue })
-        : Object.assign(Object.create(state && state.__proto__ || null), state, { [key]: newValue });
+      const newStateObject = Array.isArray(state)
+        ? state.slice(0)
+        : Object.assign(Object.create(state && state.__proto__ || null), state);
+
+      newStateObject[key] = newValue;
+      return newStateObject;
     }
 
     const updatePath = (state: any, key: string): any => {
@@ -145,10 +148,11 @@ export class Store<TStoreState>  {
     vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
-        result = [...orig].pop();
-        return result;
+        const arr = [...orig];
+        result = arr.pop();
+        return arr;
       }
-      return parent;
+      return orig;
     });
     return result;
   }
@@ -158,10 +162,11 @@ export class Store<TStoreState>  {
     vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
-        result = [...orig].unshift(value);
-        return result;
+        const arr = [...orig];
+        result = arr.unshift(value);
+        return arr;
       }
-      return parent;
+      return orig;
     });
     return result;
   }
@@ -171,10 +176,11 @@ export class Store<TStoreState>  {
     vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
-        result = [...orig.shift()];
-        return result;
+        const arr = [...orig];
+        result = arr.shift();
+        return arr;
       }
-      return parent;
+      return orig;
     });
     return result;
   }
@@ -184,10 +190,11 @@ export class Store<TStoreState>  {
     vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
-        result = [...orig].push(value);
-        return result;
+        const arr = [...orig];
+        result = arr.push(value);
+        return arr;
       }
-      return parent;
+      return orig;
     });
     return result;
   }

@@ -1,6 +1,6 @@
 {
   "name": "@easm/ts-plugin-transform",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "author": {
     "name": "Matthias Fischer",
     "email": "opensource@dotnetautor.de",
@@ -43,6 +43,6 @@
     "webpack-config-utils": "2.3.1"
   },
   "peerDependencies": {
-    "typescript": "3.3.3333"
+    "typescript": "^3.3.3333"
   }
 }

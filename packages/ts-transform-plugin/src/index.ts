@@ -16,8 +16,18 @@ type ModifierMap = {
   }
 }
 
+const contains = (node: ts.Node, name: string): boolean => {
+  return (ts.isIdentifier(node))
+    ? node.text === name
+    : (ts.isPropertyAccessExpression(node))
+      ? contains(node.name, name) || contains(node.expression, name)
+      : (ts.isElementAccessExpression(node))
+        ? contains(node.expression, name)
+        : false;
+}
+
 const isStateMemberAccessExpression = (node: ts.Node): boolean => {
-  return ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.name) && node.name.text === "state";
+  return ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.name) && node.name.text === "state" && !contains(node.expression, "state");
 }
 
 const toVirtualPathSegment = (node: ts.Node): [(ts.StringLiteral | ts.Expression | null), (ts.Expression | null)] => {
@@ -33,7 +43,7 @@ const toVirtualPath = (node: ts.Expression): [(ts.Expression | null), ((ts.Strin
   let vPathNode: ts.Expression | null = node;
   let vPathValue: (ts.StringLiteral | ts.Expression | null) = null  ;
   let vPath: (ts.StringLiteral | ts.Expression)[] = [];
-  while (vPathNode && !isStateMemberAccessExpression(vPathNode)) {
+  while (vPathNode && !isStateMemberAccessExpression(vPathNode) ) {
     [vPathValue, vPathNode] = toVirtualPathSegment(vPathNode);
     if (!vPathValue) return [null, null];
     vPath.unshift(vPathValue);
