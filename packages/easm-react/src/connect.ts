@@ -71,22 +71,33 @@ export function createHook<TStoreState>(store: Store<TStoreState>) {
    * A custom react hook to use the state of the store.
    * @param mapProps Optional: A function to map the store state properties.
    */
-  function useStore<TStateProps>(mapProps?: (store: Store<TStoreState>) => TStateProps) {
+  function useStore<TStateProps>(mapProps?: (store: Store<TStoreState>) => TStateProps, deps?: any[]) {
     if (mapProps === undefined) {
       return store;
     }
 
-    const [state, setState] = React.useState(mapProps(store));
-    const changeListener = () => setState(mapProps(store));
+    const depsRef = React.useRef({ deps: undefined as (undefined | any[]), state: {} as TStateProps});
+
+    if (!depsRef.current.deps || (depsRef.current.deps.length > 0 && depsRef.current.deps.some((dep, ind) => dep !== depsRef.current.deps![ind]))) {
+      depsRef.current.state = mapProps(store);
+      depsRef.current.deps = deps;
+    }
+
+    const [, setState] = React.useState();
+
+    const changeListener = () => {
+      depsRef.current.state = mapProps(store);
+      setState({});
+    }
 
     React.useLayoutEffect(() => {
       store.addListener(changeListener);
       return () => {
         store.removeListener(changeListener);
       }
-    }, [store]);
+    }, []);
 
-    return state;
+    return depsRef.current.state;
 
   }
   return useStore;
