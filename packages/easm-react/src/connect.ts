@@ -70,15 +70,16 @@ export function createHook<TStoreState>(store: Store<TStoreState>) {
   /**
    * A custom react hook to use the state of the store.
    * @param mapProps Optional: A function to map the store state properties.
+   * @param deps: Optional dependencies for the mapping function.
    */
-  function useStore<TStateProps>(mapProps?: (store: Store<TStoreState>) => TStateProps, deps?: any[]) {
+  function useStore<TStateProps>(mapProps?: ((store: Store<TStoreState>) => TStateProps), deps?: any[]) {
     if (mapProps === undefined) {
       return store;
     }
 
     const depsRef = React.useRef({ deps: undefined as (undefined | any[]), state: {} as TStateProps});
 
-    if (!depsRef.current.deps || (depsRef.current.deps.length > 0 && depsRef.current.deps.some((dep, ind) => dep !== depsRef.current.deps![ind]))) {
+    if (!depsRef.current.deps || (depsRef.current.deps.length > 0 && depsRef.current.deps.some((dep, ind) => dep !== deps![ind]))) {
       depsRef.current.state = mapProps(store);
       depsRef.current.deps = deps;
     }
