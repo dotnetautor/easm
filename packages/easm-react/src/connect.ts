@@ -77,17 +77,18 @@ export function createHook<TStoreState>(store: Store<TStoreState>) {
       return store;
     }
 
-    const depsRef = React.useRef({ deps: undefined as (undefined | any[]), state: {} as TStateProps});
+    const depsRef = React.useRef({ deps: undefined as (undefined | any[]), state: {} as TStateProps, mapProps: mapProps });
+    depsRef.current.mapProps = mapProps;
 
     if (!depsRef.current.deps || (depsRef.current.deps.length > 0 && depsRef.current.deps.some((dep, ind) => dep !== deps![ind]))) {
-      depsRef.current.state = mapProps(store);
+      depsRef.current.state = depsRef.current.mapProps(store);
       depsRef.current.deps = deps;
     }
 
     const [, setState] = React.useState();
 
     const changeListener = () => {
-      depsRef.current.state = mapProps(store);
+      depsRef.current.state = depsRef.current.mapProps(store);
       setState({});
     }
 
