@@ -21,11 +21,9 @@ const contains = (node: ts.Node, name: string): boolean => {
     ? node.text === name
     : (ts.isPropertyAccessExpression(node))
       ? contains(node.name, name) || contains(node.expression, name)
-      : (ts.isElementAccessExpression(node))
+      : (ts.isElementAccessExpression(node) || ts.isNonNullExpression(node) || ts.isParenthesizedExpression(node) || ts.isAsExpression(node) )
         ? contains(node.expression, name)
-        : (ts.isParenthesizedExpression(node) && ts.isAsExpression(node.expression))
-          ? contains(node.expression.expression, name)
-          : false;
+        : false;
 }
 
 const isStateMemberAccessExpression = (node: ts.Node): boolean => {
@@ -37,8 +35,8 @@ const toVirtualPathSegment = (node: ts.Node): [(ts.StringLiteral | ts.Expression
     return [ts.createStringLiteral(node.name.text), node.expression]; // todo: check is repression has string or number type !!!
   } else if (ts.isElementAccessExpression(node)) {
     return [node.argumentExpression, node.expression]
-  } else if (ts.isParenthesizedExpression(node) && ts.isAsExpression(node.expression)) {
-    return toVirtualPathSegment(node.expression.expression)
+  } else if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isNonNullExpression(node)) {
+    return toVirtualPathSegment(node.expression)
   }
   return [null, null];
 };
