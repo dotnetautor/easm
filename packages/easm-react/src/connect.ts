@@ -72,7 +72,7 @@ export function createHook<TStoreState>(store: Store<TStoreState>) {
    * @param mapProps Optional: A function to map the store state properties.
    * @param deps: Optional dependencies for the mapping function.
    */
-  function useStore<TStateProps>(mapProps?: ((store: Store<TStoreState>) => TStateProps), deps?: any[]) {
+  function useStore<TStateProps = {}>(mapProps?: ((store: Store<TStoreState>) => TStateProps), deps?: any[]) {
     if (mapProps === undefined) {
       return store;
     }
@@ -85,11 +85,11 @@ export function createHook<TStoreState>(store: Store<TStoreState>) {
       depsRef.current.deps = deps;
     }
 
-    const [, setState] = React.useState();
+    const [, setState] = React.useState<TStoreState>();
 
     const changeListener = () => {
       depsRef.current.state = depsRef.current.mapProps(store);
-      setState({});
+      setState({} as any);
     }
 
     React.useLayoutEffect(() => {

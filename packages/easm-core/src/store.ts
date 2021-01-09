@@ -1,7 +1,35 @@
 import { EventEmitter } from 'events';
 
+const pathSymbol = Symbol("Object path");
+
+type ObjectPathProxy<TRoot, T> = {
+  [P in keyof T]: ObjectPathProxy<TRoot, T[P]>;
+} & {
+  [pathSymbol]: (string | symbol)[];
+};
+
+type ObjectProxyArg<R, T> = ObjectPathProxy<R, T> | ((p: ObjectPathProxy<R, R>) => ObjectPathProxy<R, T>);
+
+export const createProxy = <T>(path: (string | symbol)[] = []): ObjectPathProxy<T, T> => {
+  const proxy = new Proxy<ObjectPathProxy<T, T>>({ [pathSymbol]: path } as any, {
+    get(target: ObjectPathProxy<T, T>, key: string | symbol) {
+      return key === pathSymbol
+        ? target[pathSymbol]
+        : createProxy([...(path || []), key]);
+    },
+  });
+  return proxy;
+};
+
+const getPath = <R, T>(proxy: ObjectProxyArg<R, T>) => {
+  if (typeof proxy === "function") {
+    proxy = proxy(createProxy<R>());
+  }
+  return (proxy)[pathSymbol] as (string | symbol)[];
+}
+
 type SubStore = {
-  vPath: string[];
+  vPath: (string | symbol)[];
   vState: {};
   STATE_CHANGED: symbol;
   get(this: SubStore, vPath: string[]): {}
@@ -17,26 +45,27 @@ export class Store<TStoreState>  {
 
     const base = this;
 
-    this.SubStore = function (this: SubStore, vPath: string[]) {
+    this.SubStore = function (this: SubStore, vPath: (string | symbol)[]) {
       this.vPath = vPath;
-      this.vState = base.get(this.vPath);
-      this.STATE_CHANGED = Symbol(`$${vPath.join("/")}$$`);
+      this.vState = base.readByPath(this.vPath);
+      this.STATE_CHANGED = Symbol(`$${this.vPath.join("/")}$$`);
 
       base.addListener(() => {
         const oldState = this.vState;
-        this.vState = base.get(this.vPath);
+        this.vState = base.readByPath(this.vPath);
         if (oldState !== this.vState) {
           base.eventEmitter.emit(this.STATE_CHANGED);
         }
       });
     }
 
-    this.SubStore.prototype.updateByPath = function (this: SubStore, vPath: string[], updateFunction: (parent: [] | {}, key: string) => {}) {
-      base.updateByPath(this.vPath.concat(vPath.slice(1)), updateFunction);
+    this.SubStore.prototype.updateByPath = function (this: SubStore, vPath: (string | symbol)[], updateFunction: (parent: [] | {}, key: string | symbol ) => {}) {
+      base.updateByPath(this.vPath.concat(vPath), updateFunction);
     }
 
-    this.SubStore.prototype.get = function (this: SubStore, vPath: string[]) {
-      return base.get(this.vPath.concat(vPath.slice(1)));
+    this.SubStore.prototype.get = function <R, T>(this: SubStore, proxy: ObjectProxyArg<R, T>) {
+      const vPath = getPath(proxy);
+      return base.readByPath(this.vPath.concat(vPath));
     }
 
     this.SubStore.prototype.addListener = function (this: SubStore, listener: (...args: any[]) => void) {
@@ -72,17 +101,18 @@ export class Store<TStoreState>  {
   }
 
   private subStores: { [path: string]: SubStore } = {};
-  private getSubStore(vPath: string[]) {
+
+  public getSubStore<T>(proxy: ObjectProxyArg<TStoreState, T>): Store<T> {
+    const vPath = getPath(proxy);
     const path = vPath.join('/');
-    return (this.subStores[path] ||
-      (this.subStores[path] = new this.SubStore(vPath)));
+    return (this.subStores[path] || (this.subStores[path] = new this.SubStore(vPath))) as any;
   }
 
-  private updateByPath(vPath: string[], updateFunction: (parent: [] | {}, key: string) => {}) {
+  private updateByPath(vPath: (string | symbol)[], updateFunction: (parent: [] | {}, key: string | symbol) => {}) {
     let oldState: {} = this._state;
-    let pos = 1;
+    let pos = 0;
 
-    const createNewStateObject = (state: any, key: string, newValue: any) => {
+    const createNewStateObject = (state: any, key: string | symbol, newValue: any) => {
       if (state && state[key] === newValue) {
         return state;
       }
@@ -95,7 +125,7 @@ export class Store<TStoreState>  {
       return newStateObject;
     }
 
-    const updatePath = (state: any, key: string): any => {
+    const updatePath = (state: any, key: string | symbol): any => {
       if (pos >= vPath.length) {
 
         const newValue = updateFunction(state, key);
@@ -121,31 +151,35 @@ export class Store<TStoreState>  {
     }
   }
 
-  private get(vPath: string[]) {
-    let result: any = vPath[0] === "state" ? this._state : undefined;
-    vPath && vPath.slice(1).forEach(prop => {
+  private readByPath(vPath: (string | symbol)[]) {
+    let result: any = this._state;
+    vPath && vPath.forEach(prop => {
       result = result && result[prop];
     });
     return result;
   }
 
-  private set(vPath: string[], value: any): any {
-    vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => value);
+  public get<T>(proxy: ObjectProxyArg<TStoreState, T>): T {
+    return this.readByPath(getPath(proxy));
+  }
+
+  public set<T, V extends T>(proxy: ObjectProxyArg<TStoreState, T>, value: V): V {
+    this.updateByPath(getPath(proxy), (parent: any = {}, key) => value);
     return value;
   }
 
-  private merge(vPath: string[], value: any): any {
+  public merge<T>(proxy: ObjectProxyArg<TStoreState, T>, value: T): T {
     let result: any;
-    vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
+    this.updateByPath(getPath(proxy), (parent: any = {}, key) => {
       result = { ...(parent[key] || {}), ...value };
       return result;
     });
     return result;
   }
 
-  private pop(vPath: string[]) {
-    let result: any;
-    vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
+  public pop<R, T extends Array<R>>(proxy: ObjectProxyArg<TStoreState, T>): R {
+    let result: R;
+    this.updateByPath(getPath(proxy), (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
         const arr = [...orig];
@@ -154,12 +188,13 @@ export class Store<TStoreState>  {
       }
       return orig;
     });
+    // @ts-ignore
     return result;
   }
 
-  private unshift(vPath: string[], value: any) {
-    let result: any;
-    vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
+  public unshift<R, T extends Array<R>>(proxy: ObjectProxyArg<TStoreState, T>, value: R): number {
+    let result: number;
+    this.updateByPath(getPath(proxy), (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
         const arr = [...orig];
@@ -168,12 +203,13 @@ export class Store<TStoreState>  {
       }
       return orig;
     });
+     // @ts-ignore
     return result;
   }
 
-  private shift(vPath: string[]) {
-    let result: any;
-    vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
+  public shift<R, T extends Array<R>>(proxy: ObjectProxyArg<TStoreState, T>): R {
+    let result: R;
+    this.updateByPath(getPath(proxy), (parent: any = {}, key) => {
       const orig = parent[key] as any[];
       if (orig !== undefined) {
         const arr = [...orig];
@@ -182,17 +218,17 @@ export class Store<TStoreState>  {
       }
       return orig;
     });
+     // @ts-ignore
     return result;
   }
 
-  private push(vPath: string[], value: any) {
-    let result: any;
-    vPath[0] === "state" && this.updateByPath(vPath, (parent: any = {}, key) => {
-      const orig = parent[key] as any[];
+  public push<R, T extends Array<R>>(proxy: ObjectProxyArg<TStoreState, T>, value: R): number {
+    let result: number = 0;
+    this.updateByPath(getPath(proxy), (parent: any = {}, key) => {
+      const orig = parent[key] as R[];
       if (orig !== undefined) {
-        const arr = [...orig];
-        result = arr.push(value);
-        return arr;
+        result = 1;
+        return [...orig, value];
       }
       return orig;
     });
@@ -203,4 +239,3 @@ export class Store<TStoreState>  {
   private _state: TStoreState;
 
 }
-
