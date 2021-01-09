@@ -1,60 +1,48 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import { get, set } from '@easm/core';
-import { get as xGet } from '@easm/core';
-import * as proxy from '@easm/core';
-
-import { useStore, useUserStore } from './store/applicationStore';
+import { useStore, User, useUserStore } from './store/applicationStore';
 
 import 'file-loader?name=[name].[ext]!./index.html';
-
-const getTitleAsync = (time: number) => new Promise<string>((resolve, reject) => {
-  window.setTimeout(() => {
-    resolve("New Title");
-  }, time);
-});
-
-const asyncTitleAction = async (time: number = 500) => {
-  const store = useStore();
-  set(store.state.isBusy, true);
-  const title = await getTitleAsync(time);
-  set(store.state.title, title);
-  set(store.state.isBusy, false);
-  set(store.state.users[xGet(store.state.currentUser)].name, "Max");
-  proxy.set(store.state.users[xGet(store.state.currentUser)], { ...xGet(store.state.users[xGet(store.state.currentUser)]) });
-};
-
 
 type TitleProps = {
   name: string;
 };
 
-const Title: React.SFC<TitleProps> = (props) => {
-  const { title, state } = useStore((store) => ({
-    title: xGet(store.state.title),
-    state: xGet(store.state),
-  }));
+const getTitleAsync = (time: number) => new Promise<string>((resolve, _reject) => {
+  window.setTimeout(resolve, time, "New Title");
+});
 
-  // state.users[0] = { name: ""};
+const Title: React.FC<TitleProps> = (props) => {
+  const { name } = props;
+  const [isBusy, setIsBusy] = useStore(state => state.isBusy);
+  const [title, setTitle] = useStore(state => state.title);
+  const [users, setUsers] = useStore(state => state.users);
+  const [currentUserId, setCurrentUserId] = useStore(state => state.currentUser);
+  const [state, setState] = useStore(state => state);
+
+  const [secondUser, setSecondUser] = useUserStore(state => state[1]);
+
+  const asyncTitleAction = async (time: number = 500) => {
+    setIsBusy(true);
+    const newTitle = await getTitleAsync(time);
+    setTitle(newTitle);
+    setIsBusy(false);
+
+    const newUsers = [
+      ...users.slice(0, currentUserId - 1),
+      {...users[currentUserId], name: "Max"},
+      ...users.slice(currentUserId + 1),
+    ];
+    setUsers(newUsers);
+  };
 
   return (
-  <>
-    <div onClick={() => asyncTitleAction(2000).catch(err => console.error(err))} >{title}</div>
-    <pre>{JSON.stringify(state, null, 2)}</pre>
-  </>
-)};
-
-const asyncUserAction = async (time: number = 500) => {
-  const store = useUserStore() ;
-  const title = await getTitleAsync(time);
-  set(store.state[1].name, title);
-};
-
-const asyncDemoAction = async () => {
-  const store = useStore();
-  const user = get(store.state.users[0]);
-  set(store.state.users[0], user);
+    <>
+      <div onClick={ () => asyncTitleAction(2000).catch(err => console.error(err)) } >{ title || name }</div>
+      <pre>{ JSON.stringify(state, null, 2) }</pre>
+    </>
+  )
 };
 
 type UserProps = {
@@ -62,22 +50,33 @@ type UserProps = {
 }
 
 const User: React.FC<UserProps> = (props) => {
- const { name } = useUserStore((userStore) => {
-    return {
-      name: xGet(userStore.state[0].name),
-    }
-  });
+  const { title } = props;
+
+  const [users, setUsers] = useStore(state => state.users);
+  const [name, setName] = useStore(state => state.users[0].name);
+
+  const asyncUserAction = async (time: number = 500) => {
+    const title = await getTitleAsync(time);
+
+    const newUsers = [
+      ...users.slice(0, 0),
+      {...users[1], name: title},
+      ...users.slice(2),
+    ];
+    setUsers(newUsers);
+  };
+
   return (
     <>
-      <div onClick={() => asyncUserAction(200)}>{props.title}</div>
-      <div >{name}</div>
+      <div onClick={ () => asyncUserAction(200) }>{ title }</div>
+      <div >{ name }</div>
     </>
   );
 }
 
-const App: React.SFC = (props) => (
+const App: React.FC = () => (
   <>
-    <Title name="Matthias"> </Title>
+    <Title name="Matthias" />
     <User title="Title" />
   </>
 );
