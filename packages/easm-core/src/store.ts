@@ -1,11 +1,10 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from "events";
+import { Immutable } from "./types";
 
 const pathSymbol = Symbol("Object path");
 
 type ObjectPathProxy<TRoot, T> = {
   [P in keyof T]: ObjectPathProxy<TRoot, T[P]>;
-} & {
-  [pathSymbol]: (string | symbol)[];
 };
 
 type ObjectProxyArg<R, T> = ObjectPathProxy<R, T> | ((p: ObjectPathProxy<R, R>) => ObjectPathProxy<R, T>);
@@ -14,7 +13,7 @@ export const createProxy = <T>(path: (string | symbol)[] = []): ObjectPathProxy<
   const proxy = new Proxy<ObjectPathProxy<T, T>>({ [pathSymbol]: path } as any, {
     get(target: ObjectPathProxy<T, T>, key: string | symbol) {
       return key === pathSymbol
-        ? target[pathSymbol]
+        ? (target as any)[pathSymbol]
         : createProxy([...(path || []), key]);
     },
   });
@@ -25,7 +24,7 @@ const getPath = <R, T>(proxy: ObjectProxyArg<R, T>) => {
   if (typeof proxy === "function") {
     proxy = proxy(createProxy<R>());
   }
-  return (proxy)[pathSymbol] as (string | symbol)[];
+  return (proxy as any)[pathSymbol] as (string | symbol)[];
 }
 
 type SubStore = {
@@ -41,7 +40,7 @@ export class Store<TStoreState>  {
 
   private SubStore: any;
 
-  constructor (initialState: Partial<TStoreState>) {
+  constructor(initialState: Partial<TStoreState>) {
 
     const base = this;
 
@@ -59,7 +58,7 @@ export class Store<TStoreState>  {
       });
     }
 
-    this.SubStore.prototype.updateByPath = function (this: SubStore, vPath: (string | symbol)[], updateFunction: (parent: [] | {}, key: string | symbol ) => {}) {
+    this.SubStore.prototype.updateByPath = function (this: SubStore, vPath: (string | symbol)[], updateFunction: (parent: [] | {}, key: string | symbol) => {}) {
       base.updateByPath(this.vPath.concat(vPath), updateFunction);
     }
 
@@ -91,8 +90,8 @@ export class Store<TStoreState>  {
 
   private static STATE_CHANGED = Symbol("$$store_state_changed$$");
 
-  public get state(): TStoreState {
-    throw new Error("Do never directly access the state without get or set.")
+  public get state(): Immutable<TStoreState> {
+    return this._state;
   }
 
   private timeOutStateChanged: number | null = null;
@@ -203,7 +202,7 @@ export class Store<TStoreState>  {
       }
       return orig;
     });
-     // @ts-ignore
+    // @ts-ignore
     return result;
   }
 
@@ -218,7 +217,7 @@ export class Store<TStoreState>  {
       }
       return orig;
     });
-     // @ts-ignore
+    // @ts-ignore
     return result;
   }
 
@@ -235,7 +234,6 @@ export class Store<TStoreState>  {
     return result;
   }
 
-  // map / reduce / filter ???
   private _state: TStoreState;
 
 }

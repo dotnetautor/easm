@@ -1,11 +1,15 @@
 import { Store } from '@easm/core';
 import { createHook } from '@easm/react';
 
+export type User = {
+  name: string;
+};
+
 export interface IApplicationStoreState {
   isBusy: boolean;
   defautTimeOut: number;
   title: string;
-  users: { name: string }[];
+  users: User[];
   currentUser: number;
   windows?: {
     [id: string]: {
@@ -22,8 +26,5 @@ const applicationStore = new Store<IApplicationStoreState>({
   currentUser: 0
 });
 
-// export const { connectStore, useStore, store } = createAdapter(applicationStore);
-// export const { connectStore: connectUserStore, useStore: useUserStore, store: userStore } = createAdapter(applicationStore.state.users);
-
 export const useStore = createHook(applicationStore);
-export const useUserStore = createHook(applicationStore.state.users);
+export const useUserStore = createHook(applicationStore, state => state.users);
