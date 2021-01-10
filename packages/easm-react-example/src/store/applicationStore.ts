@@ -26,5 +26,7 @@ const applicationStore = new Store<IApplicationStoreState>({
   currentUser: 0
 });
 
+applicationStore.set((state) => state.title, "It works");
+
 export const useStore = createHook(applicationStore);
 export const useUserStore = createHook(applicationStore, state => state.users);
