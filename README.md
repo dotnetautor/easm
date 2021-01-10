@@ -14,77 +14,24 @@ The application state is immutable from the point of view of the store user. Thi
 Easm is designed for proper typing with TypeScript as application state manager for a react application. All examples will show how to use it along with TypeScript and React. Anyhow you can use it with ES5/ES6 and with or without react or any other UI library as well.
 
 ## About
-`easm` is developed and maintained by [MFICO Training](https://mfico.de). If you're interested in learning more about JavaScript/Typescript and/or React, please [get in touch](mailto:training@mfico.de)!
+`easm` is developed and maintained by [MFICO Training](https://mfico.de) and supported by [AFE-GmdG](mailto:afe-gmdg@gmx.de). If you're interested in learning more about JavaScript/Typescript and/or React, please [get in touch](mailto:training@mfico.de)!
 
 ## Installation
 ### Using NPM
 ```
 npm install -S -E @easm/core
 npm install -S -E @easm/react
-npm install -D -E @easm/babel-plugin-transform
 ```
 
 ### Using YARN
 ```
 yarn add -E @easm/core
 yarn add -E @easm/react
-yarn add -D -E @easm/ts-plugin-transform
-yarn add -D -E @easm/babel-plugin-transform
 
 ```
 
 ## Usage
-### Choose your transpiler
-`easm` can be used either directly with a typescript transpiler plugin or alternatively it can be used with a babel plugin.
-
-### Configure typescript & webpack
-To use `easm` directly with typescript and webpack the package `@easm/ts-plugin-transform` will be need. Then the plugin can be imported into the `webpack.config.js` file and the ts-loader can be configured as follows:
-
-```js
-const easmTransformer = require('@easm/ts-plugin-transform');
-// ...
-module.exports = {
-   name: 'Client',
-    target: 'web',
-    // ..
-    module: {
-      rules: [{
-        exclude: /(node_modules|bower_components)/,
-        test: /\.tsx?$/,
-        use: [ {
-          loader: 'ts-loader',
-          options: {
-            getCustomTransformers: program => ({
-              before: [
-                easmTransformer(program)
-              ]
-            })
-          }
-        }]
-      },
-      // ..
-      ]
-    },
-    // ...
-  };
-};
-```
-
-### Configure babel
-The essential application state manager needs its own babel transpiler provided in the package `@easm/babel-plugin-transform`. Please add this plugin to your `.babelrc` configuration file as plugin before using EASM. eg.:
-
-```json
-{
-  "presets": [
-      "@babel/preset-react",
-      "@babel/preset-env"
-  ],
-  "plugins": [ "@easm/transform"]
-}
-```
-
-## Create a store
-
+### Create a store
 Basically a store consists of an initial type description of the store state like:
 ```ts
 import { Store } from '@easm/core';
@@ -92,9 +39,15 @@ import { Store } from '@easm/core';
 export interface IApplicationStoreState {
   application: {
     isBusy: boolean;
-    defautTimeOut: number;
     title: string;
   },
+  authors: {
+    name: string;
+    books: {
+      title: string;
+      isbn: number;
+    }[];
+  }[];
   usersManager: {
     users: { name: string }[];
     currentUserId: number | null
@@ -103,201 +56,86 @@ export interface IApplicationStoreState {
 }
 ```
 
-In that example are two main areas `application` and `userManger` each represent the state of one area of the application. The next step is to create the store and initialize it with the initial state.
+In that example are three main areas `application`, `authors` and `userManger` each represent the state or some data of one area of the application. The next step is to create the store and initialize it.
 ```ts
 // ...
 export const applicationStore = new Store<IApplicationStoreState>({
   application: {
     isBusy: false,
-    title: "User Manager",
-    defautTimeOut: 400,
+    title: "Number One Book Store",
   },
+  authors: [],
   usersManager: {
     users: [],
-    currentUserId: null
-  }
+    currentUserId: null,
+  },
 });
 ```
 
-### Read and Change some states
-The state must be always accessed using the accessor methods provided by the easm core package like `get` or `set`.
+### Read and update or write some states
+The state must be always accessed using the store accessor methods like `get` or `set`.
+To change some property of the state synchronously, the set accessor shall be used.
+
 ```ts
-import { get, set } from '@easm/core';
+const completeState = applicationStore.get();
+const isBusy = applicationStore.get(state => state.application.isBusy);
+applicationStore.set(state => state.application.isBusy, true);
 // ...
 ```
+### Get notified of changes
 Furthermore the store provides a notification, if the state has changed.
 Please note that the state will always be read using the accessor method `get`.
-```ts
-console.log(JSON.stringify(get(applicationStore.state), null, 2));
 
-applicationStore.addListener(() => {
-  console.log(JSON.stringify(get(applicationStore.state), null, 2));
-});
-```
-To change some property of the state synchronously, the set accessor shall be used.
 ```ts
-const changeTitleAction = (title: string) => {
-  set(applicationStore.state.application.title, title);
+function logObject<T>(state: T) {
+  console.log(JSON.stringify(state, null, 2));
 }
-changeTitleAction("New Title");
-```
-Asynchronous function results can be directly processed within the action using async/await or then.
-```ts
-const getTitleAsync = (time: number) => new Promise<string>((resolve, reject) => {
-  window.setTimeout(() => {
-    resolve("Deayed Title");
-  }, time);
+
+logObject(applicationStore.get());
+logObject(applicationStore.get(state => state.application));
+
+applicationStore.addListener(applicationStoreState => {
+  logObject(applicationStoreState);
+});
+applicationStore.addListener(state => state.application.isBusy, isBusy => {
+  logObject(isBusy);
 });
 
-const asyncTitleAction = async (time: number = get(applicationStore.state.application.defautTimeOut)) => {
-  set(applicationStore.state.application.isBusy, true);
-  const title = await getTitleAsync(time);
-  set(applicationStore.state.application.title, title);
-  set(applicationStore.state.application.isBusy, false);
-};
-
-asyncTitleAction(2000);
 ```
-## Using EASM with React Hooks >= 16.8
+
+## Usage with React Hooks (React >= 16.8.)
 The react library of EASM provides a custom hook generator function `createHook`.
+You can create hooks either for the complete store state or for a specific sub store state:
 ```ts
 import { createHook } from '@easm/react';
 // ...
-export const { useStore } = createHook(applicationStore);
+const useApplicationStore = createHook(applicationStore);
+
+const useAuthorsStore = createHooke(applicationStore,
+  state => state.authors);
+
+const useUsersManagerStore = createHook(applicationStore,
+  state => state.usersManager);
 ```
 
-The generated hook can called without any parameter to get the store itself. This should be used within the actions to get access to the store.
+The generated hook will be used in the component to get access of the store state.
 ```ts
-const asyncTitleAction = async (time: number = 500) => {
+const BookStoreTitle: React.FC = () => {
 
-  const applicationStore = useStore();
+  const [app, updateApp] = useApplicationStore(state => state.application);
+  // app is a immutable object, containing the current app data of the store state.
+  // updateApp is a function to update the app data inside the store state.
 
-  set(applicationStore.state.application.isBusy, true);
-  const title = await getTitleAsync(time);
-  set(applicationStore.state.application.title, title);
-  set(applicationStore.state.application.isBusy, false);
-};
-```
-
-The same hook will be used in the component using a mapping function as parameter to create the mapping of the store state using the accessor methodes.
-```ts
-type TitleProps = {
-  name: string;
-};
-
-const Title: React.SFC<TitleProps> = (props) => {
-
-  const { title, state } = useStore((store) => ({
-    title: get(store.state.title),
-    state: get(store.state),
-  }));
+  const setANewStoreTitle = () => {
+    updateApp((app) => { app.title = "The best bookstore in the world!" });
+  };
 
   return (
   <>
-    <div onClick={() => asyncTitleAction(2000).catch(err => console.error(err))} >{title}</div>
-    <pre>{JSON.stringify(state, null, 2)}</pre>
+    <h1>{ title }</div>
+    <button type="button" onClick={ setANewStoreTitle }>
+      Update the store title
+    </button>
   </>
 )};
-```
-Often only a part of the sore state is need. In this case the `createHook` function can also be used to provide access to a certain area of the store. To create such partial store just provide the store with the state property which shall become the root element of the new sub store. The created custom hook will automatically re-render the component it will be used in, in case of any property of the sub store has changed.
-
-```ts
-export const useUserStore = createHook(applicationStore.state.users);
-```
-
-Such partial store can be used the same way like the application store.
-
-```ts
-const asyncUserAction = async (time: number = 500) => {
-  const store = useUserStore() ;
-  const title = await getTitleAsync(time);
-  set(store.state[1].name, title);
-};
-
-
-type UserProps = {
-  title: string;
-}
-
-const User: React.FC<UserProps> = (props) => {
- const { name, state } = useUserStore((userStore) => {
-    return {
-      name: get(userStore.state[0].name),
-      state: get(userStore.state),
-    }
-  });
-  return (
-    <>
-      <div onClick={() => asyncUserAction(200)}>{props.title}</div>
-      <div >{name}</div>
-    </>
-  );
-}
-```
-
-## Using EASM with React < 16.8
-To simplify access as much as possible, EASM provides an addtional generator function for the use of EASM with older REACT versions not supporting hook, for creating an connect adapter and granting access to the store.
-```ts
-import { createAdapter, Connect } from '@easm/react';
-// ...
-export const { connectStore, useStore, store } = createAdapter(applicationStore);
-```
-If only a part of the sores is need the createAdapter function can also be used to provide access to a certain area of the store. To create such partial store just provide the store with the state property which shall become the root element of the new store. The new sub store will provide a change event as well, which will only fire in case of changes within the scope of the sub store.
-```ts
-export const {
-  connectStore: connectApplicationStore,
-  useStore: useApplicationStore,
-  store: applicationStore
-} = createAdapter(applicationStore.state.application);
-
-export const {
-  connectStore: connectUserStore,
-  useStore: useUserStore,
-  store: userStore
-} = createAdapter(applicationStore.state.usersManager);
-```
-To simplify the access to the application area of the sore you can use the generated helper `useApplicationSore`:
-```ts
-const asyncTitleAction = useApplicationStore(store => async (time: number = get(store.state.defautTimeOut)) => {
-  set(store.state.isBusy, true);
-  const title = await getTitleAsync(time);
-  set(store.state.title, title);
-  set(store.state.isBusy, false);
-});
-```
-To prepare the connection between the store state and a react component a mapping between the store properties and the components props will be need. This can be done with the help of a mapper function. The same helper `useApplicationSore` can be used access the store within the mapper function. This function will map all need properties as well as all need actions. You can map a single properties or the complete state object:
-```ts
-const mapTitleComponentProps = useApplicationStore((store) => ({
-  title: get(store.state.title),
-  state: get(store.state),
-}));
-```
-The type for the components props can be inferred with the type helper `Connect` using the type of the mapper function:
-```ts
-type TitleComponentProps = Connect<typeof mapTitleComponentProps> & {
-  name: string; // additional property
-};
-```
-In this example the **Title** component will use this those props:
-```ts
-const TitleComponent: React.SFC<TitleComponentProps> = (props) => (
-  <>
-    <div onClick={() => asyncTitleAction(2000).catch(err => console.error(err))} >{props.title}</div>
-    <pre>{JSON.stringify(props.state, null, 2)}</pre>
-  </>
-);
-```
-Finally, the component needs to be connected with the store:
-```ts
-const Title = connectApplication(mapTitleCompnentProps)(TitleComponent);
-```
-The Title componment can be used like this:
-```ts
-const App: React.SFC = (props) => (
-  <>
-    <Title name="Matthias"> </Title>
-  </>
-);
-
-ReactDOM.render(<App />, document.getElementById('app'));
 ```

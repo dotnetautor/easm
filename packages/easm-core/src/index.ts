@@ -1,2 +1,2 @@
-export { Store, createProxy } from './store';
+export { Store } from './store';
 export { Mutable, Immutable } from './types';

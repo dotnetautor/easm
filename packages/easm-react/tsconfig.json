@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
     "baseUrl": "..",
+    "paths": {
+      "@easm/core/store": [
+        "./easm-core/dist/types/store"
+      ],
+    },
     "moduleResolution": "node",
     "module": "esnext",
     "target": "es5",

@@ -1,6 +1,6 @@
 {
   "name": "@easm/react",
-  "version": "0.3.1",
+  "version": "0.4.1",
   "author": {
     "name": "Matthias Fischer",
     "email": "opensource@dotnetautor.de",
@@ -27,7 +27,8 @@
   "typings": "./dist/types/index.d.ts",
   "sideEffects": false,
   "dependencies": {
-    "@easm/core": "~0.3"
+    "@easm/core": "~0.4",
+    "tslib": "2.0.1"
   },
   "peerDependencies": {
     "react": "^17"
