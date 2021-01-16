@@ -1,58 +1,78 @@
-import React from 'react';
+/* eslint-disable func-names, max-len */
+import * as React from "react";
 
-import { Store, Immutable } from "@easm/core";
-import { pathSymbol, getPath } from "@easm/core/store";
+import { Immutable, Store } from "@easm/core";
+import { getPath, Key, PathSelector, pathSymbol } from "@easm/core/store";
 
-type TKey = string | number | symbol;
+type Primitive = boolean | number | bigint | string | symbol;
 
-const createUpdateProxy = <T extends { [key: string]: any;[key: number]: any; }>(target: T, handler: (path: TKey[], value: any) => void, path: TKey[] = []): T => {
-  return new Proxy<T>(target, {
-    set(target, key, value, receiver) {
+const createUpdateProxy = <T extends {}>(target: T, handler: (path: Key[], value: any) => void, path: Key[] = []): T => {
+  const proxy = new Proxy<T>(target, {
+    set(_target, key, value) {
       // console.log(path.join(".") + `.${String(key)} => ${value}`);
       handler([...path, key], value);
       return true;
     },
-    get(target: T, key: TKey) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    get(target: T, key: Key) {
+      // eslint-disable-next-line no-nested-ternary
       return key === pathSymbol
         ? path
-        : typeof key !== "symbol" && typeof target[key] === "object"
-          ? createUpdateProxy(target[key], handler, [...(path || []), key])
-          : target[key as any];
+        : typeof (target as any)[key] === "object"
+          ? createUpdateProxy((target as any)[key], handler, [...(path || []), key])
+          : (target as any)[key];
     },
   });
+
+  return proxy;
 };
 
 export type UseStoreHook<TStore> = {
-  <TSlice>(pathSelector: (state: TStore) => TSlice): [Immutable<TSlice>, (updateFunction: (value: TSlice) => void) => void];
-}
+  <TSlice>(pathSelector: PathSelector<TStore, TSlice>): [
+    Immutable<TSlice>,
+    (update: TSlice extends null
+      ? null
+      : TSlice extends undefined
+        ? undefined
+        : TSlice extends Primitive
+          ? Primitive
+          : ((value: TSlice) => void) | TSlice) => void,
+  ];
+};
 
 export function createHook<TRootStoreState>(store: Store<TRootStoreState>): UseStoreHook<TRootStoreState>;
-export function createHook<TRootStoreState, TSubStoreState>(store: Store<TRootStoreState>, subStoreSelector: (state: TRootStoreState) => TSubStoreState): UseStoreHook<TSubStoreState>;
-export function createHook<TRootStoreState, TSubStoreState>(store: Store<TRootStoreState>, subStoreSelector?: (state: TRootStoreState) => TSubStoreState): UseStoreHook<TRootStoreState | TSubStoreState> {
+export function createHook<TRootStoreState, TSubStoreState>(store: Store<TRootStoreState>, subStoreSelector: PathSelector<TRootStoreState, TSubStoreState>): UseStoreHook<TSubStoreState>;
+export function createHook<TRootStoreState, TSubStoreState>(store: Store<TRootStoreState>, subStoreSelector?: PathSelector<TRootStoreState, TSubStoreState>): UseStoreHook<TRootStoreState | TSubStoreState> {
+  const currentStore: {
+    get(): any;
+    get(path: Key[]): any;
+    update(path: Key[], value: any): void;
+    addListener(path: Key[], changeListener: (newState: any) => void): (runPendingListener?: boolean) => void;
+  } = subStoreSelector ? store.getSubStore(subStoreSelector) : store;
 
-  const currentStore = subStoreSelector ? store.getSubStore(subStoreSelector) : store;
-
-  return function <TSlice>(pathSelector: (state: TSubStoreState | TRootStoreState) => TSlice) {
+  return function <TSlice>(pathSelector: any) {
     const path = getPath(pathSelector);
-
-    const [state, setState] = React.useState<TSlice>(currentStore.get(path as unknown as TSlice));
-
+    const initialState = currentStore.get(path) as TSlice;
+    const [state, setState] = React.useState<TSlice>(initialState);
     const changeListener = (newState: TSlice) => {
-      if (state !== newState) {
-        setState(newState);
-      }
+      setState(newState);
+      // if (state !== newState) {
+      // }
     };
 
-    React.useLayoutEffect(() => {
-      return currentStore.addListener(path, changeListener);
-    }, []);
+    React.useLayoutEffect(() => currentStore.addListener(path, changeListener), []);
 
     return [
       state,
-      function (updateFunction: (value: TSlice) => void) {
-        updateFunction(createUpdateProxy(state, (path, value) => {
-          currentStore.set(path, value);
-        }, path));
+      function (updateFunction: any): void {
+        if (typeof updateFunction === "function") {
+          // eslint-disable-next-line @typescript-eslint/no-shadow
+          createUpdateProxy(state, (path, value) => {
+            currentStore.update(path, value);
+          }, path);
+        } else {
+          currentStore.update(path, updateFunction);
+        }
       },
     ];
   };

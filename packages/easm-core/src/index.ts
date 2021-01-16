@@ -1,2 +1,2 @@
-export { Store } from './store';
+export { Key, ObjectPathProxy, ObjectProxyArg, getPath, createPathProxy, Store, SubStore } from "./store";
 export { Mutable, Immutable } from './types';
