@@ -106,7 +106,6 @@ export class Store<TRootStoreState> {
           writable: false,
           // eslint-disable-next-line @typescript-eslint/no-shadow
           value: function update<TObjectState>(this: SubStore<TSubStoreState>, proxy: ObjectProxyArg<TSubStoreState, TObjectState>, value: TObjectState) {
-            console.warn("Calling updateByPath from SubStore");
             base.updateByPath([...this.vPath, ...getPath(proxy)], value);
           },
         },
@@ -197,7 +196,6 @@ export class Store<TRootStoreState> {
     let lastState: any = proxy != null ? this.get(proxy) : this.get();
 
     const changeHandler = () => {
-      console.log("changeHandler");
       const newState = proxy != null ? this.get(proxy) : this.get();
       if (newState !== lastState && typeof listener === "function") {
         listener(newState as any);
@@ -209,7 +207,6 @@ export class Store<TRootStoreState> {
 
     return (runPendingListener: boolean = false) => {
       if (runPendingListener && this.timeoutStateChangedHandle) {
-        console.error("NEEEEE");
         window.clearTimeout(this.timeoutStateChangedHandle);
         this.timeoutStateChangedHandle = null;
         this.onStateChanged();
@@ -228,7 +225,6 @@ export class Store<TRootStoreState> {
   }
 
   update<TObjectState>(proxy: ObjectProxyArg<TRootStoreState, TObjectState>, value: TObjectState): void {
-    console.warn("Calling updateByPath from RootStore");
     this.updateByPath(getPath(proxy), value);
   }
 }
