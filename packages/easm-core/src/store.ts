@@ -72,9 +72,9 @@ export class Store<TRootStoreState> {
     this.eventEmitter.emit(Store.STATE_CHANGED);
   };
 
-  getSubStore<TSubStoreState>(proxy: ObjectProxyArg<TRootStoreState, TSubStoreState>): SubStore<TSubStoreState> {
+  getSubStore<TSubStoreState>(subStoreStateProxy: ObjectProxyArg<TRootStoreState, TSubStoreState>): SubStore<TSubStoreState> {
     const base = this;
-    const vPath = getPath(proxy);
+    const vPath = getPath(subStoreStateProxy);
     const path = vPath.join("/");
 
     if (!this.subStores[path]) {
@@ -95,7 +95,6 @@ export class Store<TRootStoreState> {
           configurable: false,
           enumerable: true,
           writable: false,
-          // eslint-disable-next-line @typescript-eslint/no-shadow
           value: function get(this: SubStore<TSubStoreState>, proxy?: ObjectProxyArg<TSubStoreState, TSubStoreState>) {
             return proxy ? base.readByPath([...this.vPath, ...getPath(proxy)]) : base.readByPath(this.vPath);
           },
@@ -104,7 +103,6 @@ export class Store<TRootStoreState> {
           configurable: false,
           enumerable: true,
           writable: false,
-          // eslint-disable-next-line @typescript-eslint/no-shadow
           value: function update<TObjectState>(this: SubStore<TSubStoreState>, proxy: ObjectProxyArg<TSubStoreState, TObjectState>, value: TObjectState) {
             base.updateByPath([...this.vPath, ...getPath(proxy)], value);
           },
@@ -115,7 +113,6 @@ export class Store<TRootStoreState> {
           writable: false,
           // eslint-disable-next-line max-len
           value: function addListener<T>(this: SubStore<TSubStoreState>, first: ObjectProxyArg<TSubStoreState, T> | ((state: Immutable<T>) => void), second?: (state: Immutable<T>) => void) {
-            // eslint-disable-next-line @typescript-eslint/no-shadow
             const proxy = second != null ? first as ObjectProxyArg<TSubStoreState, T> : undefined;
             const listener = proxy != null ? second! : first as (state: Immutable<T>) => void;
 
@@ -168,9 +165,8 @@ export class Store<TRootStoreState> {
       }
       // eslint-disable-next-line no-plusplus
       const newKey = vPath[pos++];
-      // eslint-disable-next-line @typescript-eslint/no-shadow
-      const oldState = state[key];
-      return createNewStateObject(state, key, updatePath(oldState, newKey));
+      const oldUpdateState = state[key];
+      return createNewStateObject(state, key, updatePath(oldUpdateState, newKey));
     }
 
     // eslint-disable-next-line no-plusplus
