@@ -1,10 +1,9 @@
 /* eslint-disable max-len */
 import React, { useReducer } from "react";
 
-import { Immutable, Store, PathSelector, Key } from "@easm/core";
-import { getPath, pathSymbol } from "@easm/core/store";
+import { Immutable, Store, PathSelector, Key, getPath, pathSymbol } from "@easm/core";
 
-type Primitive = boolean | number | bigint | string | symbol;
+export type Primitive = boolean | number | bigint | string | symbol;
 
 const createUpdateProxy = <T extends {}>(targetObject: T, handler: (path: Key[], value: any) => void, path: Key[] = []): T => {
   const proxy = new Proxy<T>(targetObject, {
@@ -24,7 +23,7 @@ const createUpdateProxy = <T extends {}>(targetObject: T, handler: (path: Key[],
   return proxy;
 };
 
-interface UseStoreHook<TStore> {
+export interface UseStoreHook<TStore> {
   <TSlice>(pathSelector: PathSelector<TStore, TSlice>): [
     Immutable<TSlice>,
     (update: TSlice extends null

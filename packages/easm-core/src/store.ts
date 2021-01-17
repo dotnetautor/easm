@@ -1,8 +1,6 @@
 import { EventEmitter } from "events";
 import { Immutable, Key, ObjectPathProxy, ObjectProxyArg, SubStore, pathSymbol } from "./types";
 
-export { pathSymbol } from "./types";
-
 export function createPathProxy<TRoot, T>(path: Key[] = []): ObjectPathProxy<TRoot, T> {
   const proxy = new Proxy<ObjectPathProxy<TRoot, T>>({ [pathSymbol]: path } as ObjectPathProxy<TRoot, T>, {
     get(target: ObjectPathProxy<TRoot, T>, key: Key) {
