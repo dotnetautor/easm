@@ -65,7 +65,6 @@ export function createHook<TRootStoreState, TSubStoreState>(store: Store<TRootSt
       }
     };
 
-
     React.useLayoutEffect(() => currentStore.addListener(path, changeListener), []);
 
     return [
