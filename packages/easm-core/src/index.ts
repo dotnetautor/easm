@@ -1,2 +1,2 @@
-export { Store, SubStore, createPathProxy, getPath } from "./store";
-export { Mutable, Immutable } from './types';
+export { Store } from "./store";
+export { Mutable, Immutable, SubStore, PathSelector, Key } from './types';

@@ -1,29 +1,7 @@
 import { EventEmitter } from "events";
-import { Immutable } from "./types";
+import { Immutable, Key, ObjectPathProxy, ObjectProxyArg, SubStore, pathSymbol } from "./types";
 
-export const pathSymbol = Symbol("Object path");
-
-export type Key = string | number | symbol;
-
-export type ObjectPathProxy<TRoot, T> = {
-  [P in keyof T]-?: ObjectPathProxy<TRoot, T[P]>;
-} & {
-  [pathSymbol]: Key[];
-};
-
-export type PathSelector<TRoot, T> = (p: TRoot) => T;
-export type ObjectProxyArg<TRoot, T> = Key[] | ObjectPathProxy<TRoot, T> | PathSelector<TRoot, T>;
-
-export type SubStore<TSubStoreState extends {}> = {
-  vPath: Key[];
-  STATE_CHANGED: symbol;
-
-  get(this: SubStore<TSubStoreState>): Immutable<TSubStoreState>;
-  get<TObjectState>(this: SubStore<TSubStoreState>, proxy: ObjectProxyArg<TSubStoreState, TObjectState>): Immutable<TObjectState>;
-  update<TObjectState>(this: SubStore<TSubStoreState>, proxy: ObjectProxyArg<TSubStoreState, TObjectState>, value: TObjectState): void;
-  addListener(listener: (state: Immutable<TSubStoreState>) => void): (runPendingListener?: boolean) => void;
-  addListener<T>(proxy: ObjectProxyArg<TSubStoreState, T>, listener: (state: Immutable<T>) => void): (runPendingListener?: boolean) => void;
-};
+export { pathSymbol } from "./types";
 
 export function createPathProxy<TRoot, T>(path: Key[] = []): ObjectPathProxy<TRoot, T> {
   const proxy = new Proxy<ObjectPathProxy<TRoot, T>>({ [pathSymbol]: path } as ObjectPathProxy<TRoot, T>, {

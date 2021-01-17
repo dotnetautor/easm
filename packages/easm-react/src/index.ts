@@ -1,8 +1,8 @@
 /* eslint-disable max-len */
 import React, { useReducer } from "react";
 
-import { Immutable, Store } from "@easm/core";
-import { getPath, Key, PathSelector, pathSymbol } from "@easm/core/store";
+import { Immutable, Store, PathSelector, Key } from "@easm/core";
+import { getPath, pathSymbol } from "@easm/core/store";
 
 type Primitive = boolean | number | bigint | string | symbol;
 
