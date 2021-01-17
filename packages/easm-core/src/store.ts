@@ -3,191 +3,224 @@ import { Immutable } from "./types";
 
 export const pathSymbol = Symbol("Object path");
 
-type ObjectPathProxy<TRoot, T> = {
-  [P in keyof T]: ObjectPathProxy<TRoot, T[P]>;
+export type Key = string | number | symbol;
+
+export type ObjectPathProxy<TRoot, T> = {
+  [P in keyof T]-?: ObjectPathProxy<TRoot, T[P]>;
+} & {
+  [pathSymbol]: Key[];
 };
 
-type ObjectProxyArg<R, T> = (string | number | symbol)[] | ObjectPathProxy<R, T> | ((p: ObjectPathProxy<R, R>) => ObjectPathProxy<R, T>);
+export type PathSelector<TRoot, T> = (p: TRoot) => T;
+export type ObjectProxyArg<TRoot, T> = Key[] | ObjectPathProxy<TRoot, T> | PathSelector<TRoot, T>;
 
-const createPathProxy = <T>(path: (string | symbol)[] = []): ObjectPathProxy<T, T> => {
-  const proxy = new Proxy<ObjectPathProxy<T, T>>({ [pathSymbol]: path } as any, {
-    get(target: ObjectPathProxy<T, T>, key: string | symbol) {
+export type SubStore<TSubStoreState extends {}> = {
+  vPath: Key[];
+  STATE_CHANGED: symbol;
+
+  get(this: SubStore<TSubStoreState>): Immutable<TSubStoreState>;
+  get<TObjectState>(this: SubStore<TSubStoreState>, proxy: ObjectProxyArg<TSubStoreState, TObjectState>): Immutable<TObjectState>;
+  update<TObjectState>(this: SubStore<TSubStoreState>, proxy: ObjectProxyArg<TSubStoreState, TObjectState>, value: TObjectState): void;
+  addListener(listener: (state: Immutable<TSubStoreState>) => void): (runPendingListener?: boolean) => void;
+  addListener<T>(proxy: ObjectProxyArg<TSubStoreState, T>, listener: (state: Immutable<T>) => void): (runPendingListener?: boolean) => void;
+};
+
+export function createPathProxy<TRoot, T>(path: Key[] = []): ObjectPathProxy<TRoot, T> {
+  const proxy = new Proxy<ObjectPathProxy<TRoot, T>>({ [pathSymbol]: path } as ObjectPathProxy<TRoot, T>, {
+    get(target: ObjectPathProxy<TRoot, T>, key: Key) {
       return key === pathSymbol
-        ? (target as any)[pathSymbol]
-        : createPathProxy([...(path || []), key]);
+        ? target[pathSymbol]
+        : createPathProxy([...path, key]);
     },
   });
+
   return proxy;
-};
+}
 
-export const getPath = <R, T>(proxy: ObjectProxyArg<R, T>) => {
-  if (typeof proxy === "function") {
-    proxy = proxy(createPathProxy<R>());
-  } else if (typeof proxy === "object" && Array.isArray(proxy)) {
-    proxy = { [pathSymbol]: proxy } as any;
+export function getPath<TRoot, T>(proxy: ObjectProxyArg<TRoot, T>): Key[] {
+  if (typeof proxy === "object" && Array.isArray(proxy)) {
+    return proxy;
   }
-  return (proxy as any)[pathSymbol] as (string | symbol)[];
+
+  if (typeof proxy === "function") {
+    return (proxy as any)(createPathProxy<TRoot, TRoot>())[pathSymbol];
+  }
+
+  return proxy[pathSymbol];
 }
 
-type SubStore = {
-  vPath: (string | symbol)[];
-  vState: {};
-  STATE_CHANGED: symbol;
-  get(this: SubStore, vPath: string[]): {}
-}
-
-export class Store<TStoreState>  {
+export class Store<TRootStoreState> {
+  private static STATE_CHANGED = Symbol("$$store_state_changed$$");
 
   private eventEmitter = new EventEmitter();
 
-  private SubStore: any;
+  private subStores: { [path: string]: SubStore<any> } = {};
 
-  constructor (initialState: Partial<TStoreState>) {
+  private _state: TRootStoreState;
 
-    const base = this;
+  private timeoutStateChangedHandle: number | null = null;
 
-    this.SubStore = function (this: SubStore, vPath: (string | symbol)[]) {
-      this.vPath = vPath;
-      this.vState = base.readByPath(this.vPath);
-      this.STATE_CHANGED = Symbol(`$${this.vPath.join("/")}$$`);
-
-      base.addListener(() => {
-        const oldState = this.vState;
-        this.vState = base.readByPath(this.vPath);
-        if (oldState !== this.vState) {
-          base.eventEmitter.emit(this.STATE_CHANGED);
-        }
-      });
-    }
-
-    this.SubStore.prototype.updateByPath = function (this: SubStore, vPath: (string | symbol)[], updateFunction: (parent: [] | {}, key: string | symbol) => {}) {
-      base.updateByPath(this.vPath.concat(vPath), updateFunction);
-    }
-
-    this.SubStore.prototype.get = function <R, T>(this: SubStore, proxy: ObjectProxyArg<R, T>) {
-      const vPath = getPath(proxy);
-      return base.readByPath(this.vPath.concat(vPath));
-    }
-
-    this.SubStore.prototype.addListener = function (this: SubStore, listener: (...args: any[]) => void) {
-      base.eventEmitter.addListener(this.STATE_CHANGED, listener);
-    }
-
-    this.SubStore.prototype.removeListener = function (this: SubStore, listener: (...args: any[]) => void) {
-      base.eventEmitter.removeListener(this.STATE_CHANGED, listener);
-    }
-
-    Object.setPrototypeOf(this.SubStore.prototype, this);
-
-    this._state = initialState as TStoreState;
-  }
-
-  public addListener(listener: (state: TStoreState) => void): () => void;
-  public addListener<T>(proxy: ObjectProxyArg<TStoreState, T>, listener: (state: T) => void): () => void;
-  public addListener<T>(first: ObjectProxyArg<TStoreState, T> | ((state: T) => void), second?: (state: T) => void) {
-    const proxy = second != null ? first as ObjectProxyArg<TStoreState, T> : undefined;
-    const listener = proxy != null ? second! : first as (state: TStoreState) => void;
-
-    let lastState: any = proxy != null ? this.get(proxy) : this.get();
-
-    const changeHandler = () => {
-      const newState = proxy != null ? this.get(proxy) : this.get();
-      if (newState !== lastState && typeof  listener === "function") {
-        listener(newState as any);
-        lastState = newState;
-      }
-    }
-
-    this.eventEmitter.addListener(Store.STATE_CHANGED, changeHandler);
-
-    return () => {
-      this.eventEmitter.removeListener(Store.STATE_CHANGED, changeHandler);
-    }
-  }
-
-  private static STATE_CHANGED = Symbol("$$store_state_changed$$");
-
-  public get state(): Immutable<TStoreState> {
+  get state(): Immutable<TRootStoreState> {
     return this._state;
   }
 
-  private timeOutStateChanged: number | null = null;
+  constructor(initialState: Partial<TRootStoreState> | SubStore<any>) {
+    this._state = initialState as TRootStoreState;
+  }
+
   private onStateChanged = () => {
     this.eventEmitter.emit(Store.STATE_CHANGED);
+  };
+
+  getSubStore<TSubStoreState>(subStoreStateProxy: ObjectProxyArg<TRootStoreState, TSubStoreState>): SubStore<TSubStoreState> {
+    const base = this;
+    const vPath = getPath(subStoreStateProxy);
+    const path = vPath.join("/");
+
+    if (!this.subStores[path]) {
+      const subStore = Object.create(null, {
+        vPath: {
+          configurable: false,
+          enumerable: true,
+          writable: false,
+          value: vPath,
+        },
+        STATE_CHANGED: {
+          configurable: false,
+          enumerable: true,
+          writable: false,
+          value: Symbol(`$$${vPath.join("/")}$$`),
+        },
+        get: {
+          configurable: false,
+          enumerable: true,
+          writable: false,
+          value: function get(this: SubStore<TSubStoreState>, proxy?: ObjectProxyArg<TSubStoreState, TSubStoreState>) {
+            return proxy ? base.readByPath([...this.vPath, ...getPath(proxy)]) : base.readByPath(this.vPath);
+          },
+        },
+        update: {
+          configurable: false,
+          enumerable: true,
+          writable: false,
+          value: function update<TObjectState>(this: SubStore<TSubStoreState>, proxy: ObjectProxyArg<TSubStoreState, TObjectState>, value: TObjectState) {
+            base.updateByPath([...this.vPath, ...getPath(proxy)], value);
+          },
+        },
+        addListener: {
+          configurable: false,
+          enumerable: true,
+          writable: false,
+          // eslint-disable-next-line max-len
+          value: function addListener<T>(this: SubStore<TSubStoreState>, first: ObjectProxyArg<TSubStoreState, T> | ((state: Immutable<T>) => void), second?: (state: Immutable<T>) => void) {
+            const proxy = second != null ? first as ObjectProxyArg<TSubStoreState, T> : undefined;
+            const listener = proxy != null ? second! : first as (state: Immutable<T>) => void;
+
+            return (proxy != null)
+              ? base.addListener([...this.vPath, ...getPath(proxy)], listener)
+              : base.addListener(this.vPath, listener);
+          },
+        },
+      });
+
+      this.subStores[path] = subStore;
+    }
+
+    return this.subStores[path];
   }
 
-  private subStores: { [path: string]: SubStore } = {};
+  private readByPath(vPath: Key[]) {
+    let result: any = this._state;
 
-  public getSubStore<T>(proxy: ObjectProxyArg<TStoreState, T>): Store<T> {
-    const vPath = getPath(proxy);
-    const path = vPath.join('/');
-    return (this.subStores[path] || (this.subStores[path] = new this.SubStore(vPath))) as any;
+    if (vPath) {
+      vPath.forEach((prop: Key) => {
+        result = result && result[prop];
+      });
+    }
+
+    return result;
   }
 
-  private updateByPath(vPath: (string | symbol)[], updateFunction: (parent: [] | {}, key: string | symbol) => {}) {
-    let oldState: {} = this._state;
+  private updateByPath<TObjectState>(vPath: Key[], value: TObjectState): void {
+    const oldState: TRootStoreState = this._state;
     let pos = 0;
 
-    const createNewStateObject = (state: any, key: string | symbol, newValue: any) => {
+    function createNewStateObject(state: any, key: Key, newValue: any): any {
       if (state && state[key] === newValue) {
         return state;
       }
 
       const newStateObject = Array.isArray(state)
         ? state.slice(0)
-        : Object.assign(Object.create(state && state.__proto__ || null), state);
+        : Object.assign(Object.create((state && Object.getPrototypeOf(state)) || null), state);
 
       newStateObject[key] = newValue;
       return newStateObject;
     }
 
-    const updatePath = (state: any, key: string | symbol): any => {
+    function updatePath(state: any, key: Key): any {
       if (pos >= vPath.length) {
-
-        const newValue = updateFunction(state, key);
+        const newValue = value;
         return createNewStateObject(state, key, newValue);
-
-      } else {
-        const newKey = vPath[pos++];
-        const oldState = state[key];
-        return createNewStateObject(state, key, updatePath(oldState, newKey))
       }
+      // eslint-disable-next-line no-plusplus
+      const newKey = vPath[pos++];
+      const oldUpdateState = state[key];
+      return createNewStateObject(state, key, updatePath(oldUpdateState, newKey));
     }
 
+    // eslint-disable-next-line no-plusplus
     this._state = updatePath(oldState, vPath[pos++]);
 
     // handle state change
     if (this._state !== oldState) {
-      if (!this.timeOutStateChanged) {
-        this.timeOutStateChanged = window.setTimeout(() => {
-          this.timeOutStateChanged = null;
+      if (!this.timeoutStateChangedHandle) {
+        this.timeoutStateChangedHandle = window.setTimeout(() => {
+          this.timeoutStateChangedHandle = null;
           this.onStateChanged();
         });
       }
     }
   }
 
-  private readByPath(vPath: (string | symbol)[]) {
-    let result: any = this._state;
-    vPath && vPath.forEach(prop => {
-      result = result && result[prop];
-    });
-    return result;
+  addListener(listener: (state: Immutable<TRootStoreState>) => void): (runPendingListener?: boolean) => void;
+  addListener<T>(proxy: ObjectProxyArg<TRootStoreState, T>, listener: (state: Immutable<T>) => void): (runPendingListener?: boolean) => void;
+  addListener<T>(first: ObjectProxyArg<TRootStoreState, T> | ((state: Immutable<T>) => void), second?: (state: Immutable<T>) => void) {
+    const proxy = second != null ? first as ObjectProxyArg<TRootStoreState, T> : undefined;
+    const listener = proxy != null ? second! : first as (state: Immutable<T>) => void;
+
+    let lastState: any = proxy != null ? this.get(proxy) : this.get();
+
+    const changeHandler = () => {
+      const newState = proxy != null ? this.get(proxy) : this.get();
+      if (newState !== lastState && typeof listener === "function") {
+        listener(newState as any);
+        lastState = newState;
+      }
+    };
+
+    this.eventEmitter.addListener(Store.STATE_CHANGED, changeHandler);
+
+    return (runPendingListener: boolean = false) => {
+      if (runPendingListener && this.timeoutStateChangedHandle) {
+        window.clearTimeout(this.timeoutStateChangedHandle);
+        this.timeoutStateChangedHandle = null;
+        this.onStateChanged();
+      }
+      this.eventEmitter.removeListener(Store.STATE_CHANGED, changeHandler);
+    };
   }
 
-  public get(): TStoreState;
-  public get<T>(proxy: ObjectProxyArg<TStoreState, T>): T;
-  public get<T>(proxy?: ObjectProxyArg<TStoreState, T>): T {
-    return proxy != null
-      ? this.readByPath(getPath(proxy))
-      : this._state;
+  get(): Immutable<TRootStoreState>;
+  get<TObjectState>(proxy: ObjectProxyArg<TRootStoreState, TObjectState>): Immutable<TObjectState>;
+  get<TObjectState>(proxy?: ObjectProxyArg<TRootStoreState, TObjectState>) {
+    if (proxy === undefined) {
+      return this._state;
+    }
+    return this.readByPath(getPath(proxy));
   }
 
-  public set<T, V extends T>(proxy: ObjectProxyArg<TStoreState, T>, value: V): V {
-    this.updateByPath(getPath(proxy), (parent: any = {}, key) => value);
-    return value;
+  update<TObjectState>(proxy: ObjectProxyArg<TRootStoreState, TObjectState>, value: TObjectState): void {
+    this.updateByPath(getPath(proxy), value);
   }
-
-  private _state: TStoreState;
-
 }

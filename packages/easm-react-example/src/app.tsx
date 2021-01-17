@@ -30,10 +30,12 @@ const Title: React.FC<TitleProps> = (props) => {
     setIsBusy(false);
 
     const newUsers = [
-      ...users.slice(0, currentUserId - 1),
+      ...users.slice(undefined, currentUserId),
       {...users[currentUserId], name: "Max"},
       ...users.slice(currentUserId + 1),
     ];
+
+    console.log(newUsers);
     setUsers(newUsers);
   };
 
@@ -53,14 +55,14 @@ const User: React.FC<UserProps> = (props) => {
   const { title } = props;
 
   const [users, setUsers] = useStore(state => state.users);
-  const [name, setName] = useStore(state => state.users[0].name);
+  const [name, setUserOneName] = useStore(state => state.users[1].name);
 
   const asyncUserAction = async (time: number = 500) => {
     const title = await getTitleAsync(time);
 
     const newUsers = [
       ...users.slice(0, 0),
-      {...users[1], name: title},
+      { ...users[1], name: title },
       ...users.slice(2),
     ];
     setUsers(newUsers);
@@ -68,7 +70,7 @@ const User: React.FC<UserProps> = (props) => {
 
   return (
     <>
-      <div onClick={ () => asyncUserAction(200) }>{ title }</div>
+      <div onClick={ () => setUserOneName("User one Name") }>{ title }</div>
       <div >{ name }</div>
     </>
   );

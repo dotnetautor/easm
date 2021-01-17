@@ -23,7 +23,7 @@ const applicationStore = new Store<IApplicationStoreState>({
   title: "User Manager",
   users: [],
   defautTimeOut: 400,
-  currentUser: 0
+  currentUser: 1
 });
 
 applicationStore.set((state) => state.title, "It works");
