@@ -1,5 +1,5 @@
-/* eslint-disable func-names, max-len */
-import * as React from "react";
+/* eslint-disable max-len */
+import React, { useReducer } from "react";
 
 import { Immutable, Store } from "@easm/core";
 import { getPath, Key, PathSelector, pathSymbol } from "@easm/core/store";
@@ -50,24 +50,29 @@ export function createHook<TRootStoreState, TSubStoreState>(store: Store<TRootSt
     addListener(path: Key[], changeListener: (newState: any) => void): (runPendingListener?: boolean) => void;
   } = subStoreSelector ? store.getSubStore(subStoreSelector) : store;
 
-  return function <TSlice>(pathSelector: any) {
+  return <TSlice>(pathSelector: any) => {
     const path = getPath(pathSelector);
+
+    const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
     const initialState = currentStore.get(path) as TSlice;
-    const [state, setState] = React.useState<TSlice>(initialState);
+    const lastStateRef = React.useRef(initialState);
+
     const changeListener = (newState: TSlice) => {
-      setState(newState);
-      // if (state !== newState) {
-      // }
+      if (lastStateRef.current !== newState) {
+        lastStateRef.current = newState;
+        forceUpdate();
+      }
     };
+
 
     React.useLayoutEffect(() => currentStore.addListener(path, changeListener), []);
 
     return [
-      state,
+      lastStateRef.current,
       function (updateFunction: any): void {
         if (typeof updateFunction === "function") {
-          // eslint-disable-next-line @typescript-eslint/no-shadow
-          createUpdateProxy(state, (path, value) => {
+          createUpdateProxy(lastStateRef.current, (path, value) => {
             currentStore.update(path, value);
           }, path);
         } else {
