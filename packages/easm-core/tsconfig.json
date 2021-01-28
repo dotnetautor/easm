@@ -29,5 +29,11 @@
   "include": [
     "./src"
   ],
-  "compileOnSave": false
+  "compileOnSave": false,
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS",
+      "sourceMap": true
+    }
+  }
 }
