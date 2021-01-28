@@ -26,23 +26,15 @@ const createUpdateProxy = <T extends {}>(targetObject: T, handler: (path: Key[],
 export interface UseStoreHook<TStore> {
   <TSlice>(pathSelector: PathSelector<TStore, TSlice>): [
     Immutable<TSlice>,
-    (update: TSlice extends null
-      ? null
-      : TSlice extends undefined
-        ? undefined
-        : TSlice extends Primitive
-          ? Primitive
-          : ((value: TSlice) => void) | Immutable<TSlice>) => void,
+    (update: TSlice extends Primitive | null | undefined
+      ? TSlice
+      : ((value: TSlice) => void) | Immutable<TSlice>) => void,
   ];
   (): [
     Immutable<TStore>,
-    (update: TStore extends null
-      ? null
-      : TStore extends undefined
-        ? undefined
-        : TStore extends Primitive
-          ? Primitive
-          : ((value: TStore) => void) | Immutable<TStore>) => void,
+    (update: TStore extends Primitive | null | undefined
+      ? TStore
+      : ((value: TStore) => void) | Immutable<TStore>) => void,
   ]
 }
 
