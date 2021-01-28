@@ -132,7 +132,7 @@ const BookStoreTitle: React.FC = () => {
 
   return (
   <>
-    <h1>{ title }</div>
+    <h1>{ title }</h1>
     <button type="button" onClick={ setANewStoreTitle }>
       Update the store title
     </button>
