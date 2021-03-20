@@ -37,7 +37,7 @@ export class Store<TRootStoreState> {
   private timeoutStateChangedHandle: number | null = null;
 
   get state(): Immutable<TRootStoreState> {
-    return this._state;
+    return this._state as Immutable<TRootStoreState>;
   }
 
   constructor(initialState: Partial<TRootStoreState> | SubStore<any>) {
@@ -196,6 +196,8 @@ export class Store<TRootStoreState> {
     return this.readByPath(getPath(proxy));
   }
 
+  update<TObjectState>(proxy: ObjectProxyArg<TRootStoreState, TObjectState>, value: TObjectState): void;
+  update<TObjectState>(proxy: ObjectProxyArg<TRootStoreState, TObjectState>, value: Immutable<TObjectState>): void;
   update<TObjectState>(proxy: ObjectProxyArg<TRootStoreState, TObjectState>, value: TObjectState): void {
     this.updateByPath(getPath(proxy), value);
   }

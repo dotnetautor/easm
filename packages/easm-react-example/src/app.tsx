@@ -1,80 +1,26 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 
-import { useStore, User, useUserStore } from './store/applicationStore';
+import React from "react";
+import { render } from "react-dom";
 
-import 'file-loader?name=[name].[ext]!./index.html';
+import { Header } from "./components/header";
+import { Todo } from "./components/todo";
+import { Footer } from "./components/footer";
 
-type TitleProps = {
-  name: string;
-};
 
-const getTitleAsync = (time: number) => new Promise<string>((resolve, _reject) => {
-  window.setTimeout(resolve, time, "New Title");
-});
-
-const Title: React.FC<TitleProps> = (props) => {
-  const { name } = props;
-  const [isBusy, setIsBusy] = useStore(state => state.isBusy);
-  const [title, setTitle] = useStore(state => state.title);
-  const [users, setUsers] = useStore(state => state.users);
-  const [currentUserId, setCurrentUserId] = useStore(state => state.currentUser);
-  const [state, setState] = useStore(state => state);
-
-  const [secondUser, setSecondUser] = useUserStore(state => state[1]);
-
-  const asyncTitleAction = async (time: number = 500) => {
-    setIsBusy(true);
-    const newTitle = await getTitleAsync(time);
-    setTitle(newTitle);
-    setIsBusy(false);
-
-    setUsers((newUsers) => {
-      newUsers[1].name = "Matthias";
-    });
-  };
+const App: React.FC = () => {
 
   return (
     <>
-      <div onClick={ () => asyncTitleAction(2000).catch(err => console.error(err)) } >{ title || name }</div>
-      <pre>{ JSON.stringify(state, null, 2) }</pre>
-    </>
-  )
-};
-
-type UserProps = {
-  title: string;
-}
-
-const User: React.FC<UserProps> = (props) => {
-  const { title } = props;
-
-  const [users, setUsers] = useStore(state => state.users);
-  const [name, setUserOneName] = useStore(state => state.users[1].name);
-
-  const asyncUserAction = async (time: number = 500) => {
-    const title = await getTitleAsync(time);
-
-    setUsers((newUsers) => {
-      newUsers[1].name = title;
-    });
-  };
-
-  return (
-    <>
-      <div onClick={ () => setUserOneName("User one Name") }>{ title }</div>
-      <div >{ name }</div>
+      <Header />
+      <Todo />
+      <Footer />
     </>
   );
-}
+};
 
-const App: React.FC = () => (
-  <>
-    <Title name="Matthias" />
-    <User title="Title" />
-  </>
+render(
+  <App />,
+  document.getElementById("app"),
 );
-
-
-
-ReactDOM.render(<App />, document.getElementById('app'));

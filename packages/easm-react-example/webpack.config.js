@@ -2,6 +2,7 @@ const path = require('path');
 const webpack = require('webpack');
 const autoprefixer = require('autoprefixer');
 const TerserPlugin = require('terser-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = (env) => {
   const debug = env === 'debug';
@@ -93,6 +94,11 @@ module.exports = (env) => {
     },
     plugins: [
       new webpack.NoEmitOnErrorsPlugin(),
+      new HtmlWebpackPlugin({
+        filename: "index.html",
+        template: "index.html",
+        inject: "body",
+        })
     ],
     devServer: {
       host: '0.0.0.0',
