@@ -14,3 +14,4 @@ before_install:
 script:
   - yarn
   - lerna run build
+  - lerna run test
