@@ -28,7 +28,7 @@
   "sideEffects": false,
   "dependencies": {
     "@easm/core": "~0.4",
-    "tslib": "2.0.1"
+    "tslib": "2.1.0"
   },
   "peerDependencies": {
     "react": "^17"

@@ -1,0 +1,37 @@
+html {
+  padding: 0;
+  font-size: 16px;
+  background: #eee;
+  color: #000;
+  height: 100%;
+}
+
+body {
+  height: 100%;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#app > header {
+  flex: 0 0 auto;
+  font-size: 1.2em;
+}
+
+#app .content {
+  flex: 1 0 0px;
+  display: flex;
+  flex-direction: column;
+}
+
+.content.scroll {
+  overflow: hidden auto;
+}
+
+#app > footer {
+  flex: 0 0 auto;
+  font-size: 0.8em;
+}

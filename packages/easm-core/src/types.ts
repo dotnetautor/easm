@@ -1,10 +1,10 @@
 export const pathSymbol = Symbol("Object path");
 
-export type Immutable<T> = {
+export type Immutable<T> = T extends Function ? T : {
   readonly [P in keyof T]: Immutable<T[P]>;
 };
 
-export type Mutable<T> = {
+export type Mutable<T> = T extends Function ? T : {
   -readonly [P in keyof T]: Mutable<T[P]>;
 };
 
@@ -26,6 +26,7 @@ export type SubStore<TSubStoreState extends {}> = {
   get(this: SubStore<TSubStoreState>): Immutable<TSubStoreState>;
   get<TObjectState>(this: SubStore<TSubStoreState>, proxy: ObjectProxyArg<TSubStoreState, TObjectState>): Immutable<TObjectState>;
   update<TObjectState>(this: SubStore<TSubStoreState>, proxy: ObjectProxyArg<TSubStoreState, TObjectState>, value: TObjectState): void;
+  update<TObjectState>(this: SubStore<TSubStoreState>, proxy: ObjectProxyArg<TSubStoreState, TObjectState>, value: Immutable<TObjectState>): void;
   addListener(listener: (state: Immutable<TSubStoreState>) => void): (runPendingListener?: boolean) => void;
   addListener<T>(proxy: ObjectProxyArg<TSubStoreState, T>, listener: (state: Immutable<T>) => void): (runPendingListener?: boolean) => void;
 };
