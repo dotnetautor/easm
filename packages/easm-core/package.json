@@ -36,7 +36,7 @@
     "@types/events": "3.0.0",
     "@types/tape": "4.13.0",
     "nyc": "15.1.0",
-    "rollup": "2.26.1",
+    "rollup": "3.29.5",
     "rollup-plugin-commonjs": "10.1.0",
     "rollup-plugin-json": "4.0.0",
     "rollup-plugin-node-builtins": "2.1.2",
