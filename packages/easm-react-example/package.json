@@ -42,7 +42,7 @@
     "html-webpack-plugin": "4.3.0",
     "postcss-loader": "5.2.0",
     "raw-loader": "4.0.2",
-    "rollup": "2.42.1",
+    "rollup": "3.29.5",
     "rollup-plugin-commonjs": "10.1.0",
     "rollup-plugin-json": "4.0.0",
     "rollup-plugin-node-builtins": "2.1.2",
